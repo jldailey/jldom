@@ -2,11 +2,12 @@
 NotSupported = () ->
 	throw Error "NOT_SUPPORTED"
 
-String::times = (n) ->
+repeat = (s, n) ->
+	n = Math.max(0, n)
 	switch n
 		when 0 then ""
-		when 1 then @
-		else @ + @.times(n-1)
+		when 1 then s
+		else s + repeat(s, n-1)
 
 class Event
 	@CAPTURING_PHASE = 1
@@ -71,18 +72,23 @@ class Node
 	@DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC = 32
 
 	constructor: (name, value = null, type = 1, ownerDocument = null) ->
+		console.log "Node.constructor", arguments
 		@_private = {
+			nodeName: null
 			parentNode: null
 			childIndex: -1
+			classes: []
 		}
+		@__defineGetter__ 'nodeName', () => @_private.nodeName
+		@__defineSetter__ 'nodeName', (v) => @_private.nodeName = name.toUpperCase()
 		@nodeName = name
 		@nodeValue = value
 		@nodeType = type
 		@ownerDocument = ownerDocument
 		@childNodes = []
 		@attributes = {}
-		@__defineGetter__ 'previousSibling', () -> @parentNode?.childNodes[@_private.childIndex-1]
-		@__defineSetter__ 'nextSibling', () -> @parentNode?.childNodes[@_private.childIndex+1]
+		@__defineGetter__ 'previousSibling', () => @parentNode?.childNodes[@_private.childIndex-1]
+		@__defineSetter__ 'nextSibling', () => @parentNode?.childNodes[@_private.childIndex+1]
 		@__defineGetter__ 'parentNode', () => @_private.parentNode
 		@__defineSetter__ 'parentNode', (v) =>
 			if v isnt null
@@ -113,6 +119,8 @@ class Node
 					(@ownerDocument._private.classMap[cls] ?= []).push(@)
 			###
 			@attributes['class'] = value
+			# Optimization for getElementsByClassName, cache the split form
+			@_private.classes = value.split(' ')
 
 		@listeners = {
 			true: {}
@@ -211,12 +219,12 @@ class Node
 			newNode._private.childIndex = i
 			oldNode.parentNode = null
 			@childNodes.splice(i, 1, newNode)
-	toString: () ->
+	toString: (pretty=true,deep=true) ->
 		switch @nodeType
 			when Node.TEXT_NODE
 				"#text:#{@nodeValue}"
 			when Node.ELEMENT_NODE
-				Element::toString.apply(@)
+				Element::toString.call @, pretty, deep
 			when Node.ATTRIBUTE_NODE
 				"#{@nodeName}=\"#{@nodeValue}\""
 			when Node.CDATA_SECTION_NODE
@@ -226,14 +234,15 @@ class Node
 			when Node.DOCUMENT_TYPE_NODE
 				"<!DOCTYPE #{@nodeValue}>"
 			when Node.DOCUMENT_NODE
-				Element::toString.apply(@)
+				Element::toString.call @, pretty, deep
 			when Node.DOCUMENT_FRAGMENT_NODE
 				NotSupported() # TODO
 
 class Element extends Node
-	@Map = {
+	@Map = { # map tag names to classes, for use in .createElement
 		_: class HTMLElement extends Element
 			constructor: (a...) ->
+				console.log "HTMLElement constructor", a
 				super a...
 		a: class HTMLAnchorElement extends HTMLElement
 			constructor: (a...) ->
@@ -473,6 +482,7 @@ class Element extends Node
 				@nodeName = "TFOOT"
 		td: class HTMLTableCellElement extends HTMLElement
 			constructor: (a...) ->
+				console.log "HTMLTableCellElement constructor", a
 				super a...
 				@nodeName = "TD"
 		th: HTMLTableCellElement
@@ -501,15 +511,27 @@ class Element extends Node
 				@nodeName = "VIDEO"
 	}
 	constructor: (a...) ->
+		console.log "Element constructor", a
 		super a...
 		@nodeType = Node.ELEMENT_NODE
 		@__defineGetter__ 'tagName', () => @nodeName
-		@__defineSetter__ 'tagName', (v) => @nodeName = v
+		@__defineGetter__ 'innerHTML', () =>
+			h = []
+			for c in @childNodes
+				h.push c.toString(true, true)
+			return h.join('')
+		@__defineGetter__ 'innerText', () =>
+			t = []
+			for c in @childNodes
+				if c.nodeType in [Node.TEXT_NODE, Node.CDATA_SECTION_NODE]
+					t.push c.toString(false, false)
+				else if c.nodeType isnt Node.COMMENT_NODE
+					t.push c.innerText
+			return t.join('')
 	getElementsByClassName: (name) ->
 		ret = []
 		for c in @childNodes
-			# TODO: optimize this by caching the split form in className's setter
-			if name in (c.className ? "").split(" ")
+			if name in c._private.classes
 				ret.push c
 			for i in c.getElementsByClassName(name)
 				ret.push i
@@ -548,19 +570,27 @@ class Element extends Node
 	focus: NotSupported
 	blur: NotSupported
 	# render
-	toString: (indentLevel = 0) ->
+	toString: (pretty=true, deep=true, indentLevel = 0) ->
 		name = @nodeName.toLowerCase()
-		attrs = [" #{a}=\"#{@attributes[a]}\"" for a of @attributes].join('')
-		indent = "  ".times(indentLevel)
-		ret = indent + "<#{name}#{attrs}>"
-		if @childNodes.length > 0
-			ret += "\n"
-		for c in @childNodes
-			ret += c.toString(indentLevel + 1)
-		if @childNodes.length > 0
-			ret += indent
-		ret += "</#{name}>\n"
-		ret
+		attrs = (" #{a}=\"#{@attributes[a]}\"" for a of @attributes).join('')
+		indent = repeat("  ", indentLevel)
+		ret = [indent + "<#{name}#{attrs}>"]
+		r = 1
+		pretty and= deep
+		len = @childNodes.length
+		if pretty and len > 0
+			ret[r++] = "\n"
+		if deep
+			for c in @childNodes
+				ret[r++] = c.toString pretty, deep, indentLevel + 1
+		else
+			ret[r++] = "...#{len} children..."
+		if pretty and len > 0
+			ret[r++] = indent
+		ret[r++] = "</#{name}>"
+		if pretty
+			ret[r++] = "\n"
+		ret.join('')
 
 class Attr extends Node
 	constructor: (name, value) ->
@@ -588,6 +618,7 @@ class DocumentFragment extends Node
 
 class Document extends Node
 	constructor: () ->
+		console.log "Document constructor"
 		super "#document", null, Node.DOCUMENT_NODE
 		@_private = {
 			idMap: {}
@@ -611,6 +642,7 @@ class Document extends Node
 		node = new DocumentFragment()
 		node.ownerDocument = @
 	createElement: (name) ->
+		console.log "createElement",name
 		nodeClass = Element.Map[name.toLowerCase()]
 		if not nodeClass?
 			node = new Element.Map['_'](name.toUpperCase())
@@ -647,6 +679,7 @@ class Document extends Node
 
 class HTMLDocument extends Document
 	constructor: () ->
+		console.log "HTMLDocument constructor", arguments
 		super
 		@nodeName = "HTML"
 		Document::appendChild.call @,@createElement('head')
@@ -671,65 +704,65 @@ class HTMLDocument extends Document
 	writeln: NotSupported
 
 ### Document Traversal not supported yet
-class TreeWalker
-	constructor: (root, what, filter) ->
-		@root = root
-		@currentNode = root
-		@whatToShow = what
-		@filter = filter
-	parentNode: () ->
-		@currentNode = @currentNode.parentNode
-	firstChild: () ->
-		@currentNode = @currentNode.firstChild
-	lastChild: () ->
-		@currentNode = @currentNode.lastChild
-	previousSibling: () ->
-		@currentNode = @currentNode.previousSibling
-	nextSibling: () ->
-		@currentNode = @currentNode.nextSibling
-	nextNode: () ->
-		@currentNode = @currentNode.nextSibling or @currentNode.childNodes[0]
-	previousNode: () ->
-		if @currentNode is @root
+	class TreeWalker
+		constructor: (root, what, filter) ->
+			@root = root
+			@currentNode = root
+			@whatToShow = what
+			@filter = filter
+		parentNode: () ->
+			@currentNode = @currentNode.parentNode
+		firstChild: () ->
+			@currentNode = @currentNode.firstChild
+		lastChild: () ->
+			@currentNode = @currentNode.lastChild
+		previousSibling: () ->
 			@currentNode = @currentNode.previousSibling
-		else
-			@currentNode = @currentNode.previousSibling or @currentNode.parentNode
-class NodeFilter
-	# Constants returned by acceptNode
-	FILTER_ACCEPT = 1
-	FILTER_REJECT = 2
-	FILTER_SKIP   = 3
-	# Constants for whatToShow
-	SHOW_ALL = 0xFFFFFFFF
-	SHOW_ELEMENT = 0x00000001
-	SHOW_ATTRIBUTE = 0x00000002
-	SHOW_TEXT = 0x00000004
-	SHOW_CDATA_SECTION = 0x00000008
-	SHOW_ENTITY_REFERENCE = 0x00000010
-	SHOW_ENTITY = 0x00000020
-	SHOW_PROCESSING_INSTRUCTION = 0x00000040
-	SHOW_COMMENT = 0x00000080
-	SHOW_DOCUMENT = 0x00000100
-	SHOW_DOCUMENT_TYPE = 0x00000200
-	SHOW_DOCUMENT_FRAGMENT = 0x00000400
-	SHOW_NOTATION = 0x00000800
-	constructor: (whatToShow = NodeFilter.SHOW_ALL) ->
-		@whatToShow = whatToShow
-	acceptNode: (node) ->
-		if (node.nodeType & @whatToShow) isnt 0
+		nextSibling: () ->
+			@currentNode = @currentNode.nextSibling
+		nextNode: () ->
+			@currentNode = @currentNode.nextSibling or @currentNode.childNodes[0]
+		previousNode: () ->
+			if @currentNode is @root
+				@currentNode = @currentNode.previousSibling
+			else
+				@currentNode = @currentNode.previousSibling or @currentNode.parentNode
+	class NodeFilter
+		# Constants returned by acceptNode
+		FILTER_ACCEPT = 1
+		FILTER_REJECT = 2
+		FILTER_SKIP   = 3
+		# Constants for whatToShow
+		SHOW_ALL = 0xFFFFFFFF
+		SHOW_ELEMENT = 0x00000001
+		SHOW_ATTRIBUTE = 0x00000002
+		SHOW_TEXT = 0x00000004
+		SHOW_CDATA_SECTION = 0x00000008
+		SHOW_ENTITY_REFERENCE = 0x00000010
+		SHOW_ENTITY = 0x00000020
+		SHOW_PROCESSING_INSTRUCTION = 0x00000040
+		SHOW_COMMENT = 0x00000080
+		SHOW_DOCUMENT = 0x00000100
+		SHOW_DOCUMENT_TYPE = 0x00000200
+		SHOW_DOCUMENT_FRAGMENT = 0x00000400
+		SHOW_NOTATION = 0x00000800
+		constructor: (whatToShow = NodeFilter.SHOW_ALL) ->
+			@whatToShow = whatToShow
+		acceptNode: (node) ->
+			if (node.nodeType & @whatToShow) isnt 0
+				NodeFilter.FILTER_ACCEPT
+			else
+				NodeFilter.FILTER_REJECT
+	class NodeSkipper extends NodeFilter
+		acceptNode: (node) ->
+			if super(node) is NodeFilter.FILTER_REJECT
+				NodeFilter.FILTER_SKIP
 			NodeFilter.FILTER_ACCEPT
-		else
-			NodeFilter.FILTER_REJECT
-class NodeSkipper extends NodeFilter
-	acceptNode: (node) ->
-		if super(node) is NodeFilter.FILTER_REJECT
-			NodeFilter.FILTER_SKIP
-		NodeFilter.FILTER_ACCEPT
-class NodeRejecter extends NodeFilter
-	acceptNode: (node) ->
-		if super(node) is NodeFilter.FILTER_ACCEPT
-			NodeFilter.FILTER_REJECT
-		NodeFilter.FILTER_ACCEPT
+	class NodeRejecter extends NodeFilter
+		acceptNode: (node) ->
+			if super(node) is NodeFilter.FILTER_ACCEPT
+				NodeFilter.FILTER_REJECT
+			NodeFilter.FILTER_ACCEPT
 ###
 
 exports.createDocument = () ->
