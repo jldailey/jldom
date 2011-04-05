@@ -4,19 +4,17 @@ assert = (c, msg) ->
 
 assertEqual = (a, b, label) ->
 	if a isnt b
-		throw Error "#{label} (#{a?.toString(false,false)}) should equal (#{b?.toString(false,false)})"
+		throw Error "#{label} (#{a?.toString()}) should equal (#{b?.toString()})"
 
-console.log "Test createDocument"
-global.document = require('../dom').createDocument()
+dom = require('../dom')
+global.document = dom.createDocument()
 global.window = global
-require('../sizzle')
 
 assert(document?, "document should exist")
 assert(document.body?, "document.body should exist")
 assert(document.head?, "document.head should exist")
 assertEqual(document.nodeType, 9, "document.nodeType")
 
-console.log "Test createElement"
 div = document.createElement('div')
 assertEqual(div.nodeType, 1, "div.nodeType")
 assertEqual(div.nodeName, "DIV", "div.nodeName")
@@ -52,6 +50,19 @@ assertEqual alphaNodes.length, 1, "alphaNodes.length"
 assertEqual betaNodes.length, 1, "betaNodes.length"
 assertEqual alphaNodes[0], p, "alphaNodes[0]"
 assertEqual betaNodes[0], p, "betaNodes[0]"
-console.log document.toString()
+
+fragment = document.createDocumentFragment()
+fragment.appendChild(document.createElement("div"))
+fragment.appendChild(document.createElement("p"))
+
+assertEqual fragment.childNodes.length, 2, "fragment.childNodes.length"
+assertEqual fragment.toString(), "<div></div><p></p>", "fragment.toString()"
+
+div.appendChild(fragment)
+
+text = document.createTextNode("Hallo!")
+div.appendChild(text)
+
+console.log document.toString(true,true)
 
 # vim: ft=coffee

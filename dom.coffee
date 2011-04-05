@@ -1,4 +1,3 @@
-
 NotSupported = () ->
 	throw Error "NOT_SUPPORTED"
 
@@ -8,6 +7,12 @@ repeat = (s, n) ->
 		when 0 then ""
 		when 1 then s
 		else s + repeat(s, n-1)
+
+extend = (o, p) ->
+	o ?= {}
+	for k of p
+		o[k] = p[k]
+	return o
 
 class Event
 	@CAPTURING_PHASE = 1
@@ -49,7 +54,6 @@ class MutationEvent extends Event
 		@attrChange = attrChange
 
 class Node
-	# NodeType constants
 	@ELEMENT_NODE = 1
 	@ATTRIBUTE_NODE = 2
 	@TEXT_NODE = 3
@@ -72,7 +76,6 @@ class Node
 	@DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC = 32
 
 	constructor: (name, value = null, type = 1, ownerDocument = null) ->
-		console.log "Node.constructor", arguments
 		@_private = {
 			nodeName: null
 			parentNode: null
@@ -80,7 +83,7 @@ class Node
 			classes: []
 		}
 		@__defineGetter__ 'nodeName', () => @_private.nodeName
-		@__defineSetter__ 'nodeName', (v) => @_private.nodeName = name.toUpperCase()
+		@__defineSetter__ 'nodeName', (v) => @_private.nodeName = v?.toUpperCase()
 		@nodeName = name
 		@nodeValue = value
 		@nodeType = type
@@ -126,11 +129,11 @@ class Node
 			true: {}
 			false: {}
 		}
-	compareDocumentPosition: NotSupported
-	isDefaultNamespace: NotSupported
-	isEqualNode: NotSupported
-	isSupported: NotSupported
-	normalize: NotSupported
+	# compareDocumentPosition: NotSupported
+	# isDefaultNamespace: NotSupported
+	# isEqualNode: NotSupported
+	# isSupported: NotSupported
+	# normalize: NotSupported
 	addEventListener: (type, listener, useCapture = false) ->
 		list = (@listeners[useCapture][type] ?= [])
 		if not listener in list
@@ -194,47 +197,71 @@ class Node
 	insertBefore: (newNode, refNode) ->
 		if refNode.parentNode isnt @
 			throw Error "Cannot insertBefore a non-child."
-		i = refNode._private.childIndex
-		if i > -1
-			@childNodes.splice(i, 0, newNode)
-			newNode._private.childIndex = i
-			refNode._private.childIndex = i + 1
+		if newNode.nodeType is Node.DOCUMENT_FRAGMENT_NODE
+			# could be optimized to be a single splice
+			for c in newNode.childNodes
+				@insertBefore(c, refNode)
+		else
+			i = refNode._private.childIndex
+			if i > -1
+				@childNodes.splice(i, 0, newNode)
+				newNode._private.childIndex = i
+				newNode._private.parentNode = @
+				refNode._private.childIndex = i + 1
 	appendChild: (node) ->
-		node._private.parentNode = @
-		node._private.childIndex = @childNodes.length
-		@childNodes.push node
+		if node.nodeType is Node.DOCUMENT_FRAGMENT_NODE
+			# could be optimized to do a single splice
+			for c in node.childNodes
+				@appendChild(c)
+		else
+			node._private.parentNode = @
+			node._private.childIndex = @childNodes.length
+			@childNodes.push node
 	removeChild: (node) ->
-		if node.parentNode isnt @
-			throw Error "Cannot removeChild a non-child."
 		i = node._private.childIndex
-		if i > -1
-			node.parentNode = null
+		if node.parentNode is @ and i > -1
+			node._private.parentNode = null
+			node._private.childIndex = -1
 			@childNodes.splice(i, 1)
+		else
+			throw Error "Cannot removeChild a non-child."
 	replaceChild: (newNode, oldNode) ->
 		if oldNode.parentNode isnt @
 			throw Error "Cannot replaceChild a non-child."
 		i = oldNode._private.childIndex
 		if i > -1
-			newNode._private.parentNode = @
-			newNode._private.childIndex = i
-			oldNode.parentNode = null
-			@childNodes.splice(i, 1, newNode)
-	toString: (pretty=true,deep=true) ->
+			if newNode.nodeType is Node.DOCUMENT_FRAGMENT_NODE
+				# could be optimized to do a single splice
+				for c in @childNodes
+					@insertBefore(c, oldNode)
+				@removeChild(oldNode)
+			else
+				newNode._private.parentNode = @
+				newNode._private.childIndex = i
+				oldNode.parentNode = null
+				@childNodes.splice(i, 1, newNode)
+	toString: (pretty=false,deep=false,indentLevel=0) ->
+		if pretty
+			indent = repeat("  ", indentLevel)
+			newline = "\n"
+		else
+			indent = ""
+			newline = ""
 		switch @nodeType
 			when Node.TEXT_NODE
-				"#text:#{@nodeValue}"
+				"#{indent}#{@nodeValue}" + newline
 			when Node.ELEMENT_NODE
-				Element::toString.call @, pretty, deep
+				Element::toString.call @, pretty, deep, indentLevel
 			when Node.ATTRIBUTE_NODE
-				"#{@nodeName}=\"#{@nodeValue}\""
+				"#{indent}#{@nodeName}=\"#{@nodeValue}\""
 			when Node.CDATA_SECTION_NODE
-				"<![CDATA[#{@nodeValue}]]>"
+				"#{indent}<![CDATA[#{@nodeValue}]]>" + newline
 			when Node.COMMENT_NODE
-				"<!-- #{@nodeValue} -->"
+				"#{indent}<!-- #{@nodeValue} -->" + newline
 			when Node.DOCUMENT_TYPE_NODE
-				"<!DOCTYPE #{@nodeValue}>"
+				"#{indent}<!DOCTYPE #{@nodeValue}>" + newline
 			when Node.DOCUMENT_NODE
-				Element::toString.call @, pretty, deep
+				Element::toString.call @, pretty, deep, indentLevel
 			when Node.DOCUMENT_FRAGMENT_NODE
 				NotSupported() # TODO
 
@@ -242,283 +269,280 @@ class Element extends Node
 	@Map = { # map tag names to classes, for use in .createElement
 		_: class HTMLElement extends Element
 			constructor: (a...) ->
-				console.log "HTMLElement constructor", a
 				super a...
 		a: class HTMLAnchorElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "A"
 				super a...
-				@nodeName = "A"
 		area: class HTMLAreaElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "AREA"
 				super a...
-				@nodeName = "AREA"
 		audio: class HTMLAudioElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "AUDIO"
 				super a...
-				@nodeName = "AUDIO"
 		base: class HTMLBaseElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "BASE"
 				super a...
-				@nodeName = "BASE"
 		blockquote: class HTMLBlockquoteElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "BLOCKQUOTE"
 				super a...
-				@nodeName = "BLOCKQUOTE"
 		body: class HTMLBodyElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "BODY"
 				super a...
-				@nodeName = "BODY"
 		br: class HTMLBRElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "BR"
 				super a...
-				@nodeName = "BR"
 		button: class HTMLButtonElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "BUTTON"
 				super a...
-				@nodeName = "BUTTON"
 		canvas: class HTMLCanvasElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "CANVAS"
 				super a...
-				@nodeName = "CANVAS"
 		caption: class HTMLTableCaptionElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "CAPTION"
 				super a...
-				@nodeName = "CAPTION"
 		col: class HTMLTableColElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "COL"
 				super a...
-				@nodeName = "COL"
 		colgroup: class HTMLTableColElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "COLGROUP"
 				super a...
-				@nodeName = "COLGROUP"
 		del: class HTMLDelElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "DEL"
 				super a...
-				@nodeName = "DEL"
 		details: class HTMLDetailsElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "DETAILS"
 				super a...
-				@nodeName = "DETAILS"
 		div: class HTMLDivElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "DIV"
 				super a...
-				@nodeName = "DIV"
 		dl: class HTMLDListElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "DL"
 				super a...
-				@nodeName = "DL"
 		embed: class HTMLEmbedElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "EMBED"
 				super a...
-				@nodeName = "EMBED"
 		fieldSet: class HTMLFieldSetElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "FIELDSET"
 				super a...
-				@nodeName = "FIELDSET"
 		form: class HTMLFormElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "FORM"
 				super a...
-				@nodeName = "FORM"
 		h1: class HTMLHeadingElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "H1"
 				super a...
-				@nodeName = "H1"
 		h2: class HTMLHeading2Element extends HTMLHeadingElement
 			constructor: (a...) ->
+				a[0] = "H1"
 				super a...
-				@nodeName = "H1"
 		h3: class HTMLHeading3Element extends HTMLHeadingElement
 			constructor: (a...) ->
+				a[0] = "H1"
 				super a...
-				@nodeName = "H1"
 		h4: class HTMLHeading4Element extends HTMLHeadingElement
 			constructor: (a...) ->
+				a[0] = "H1"
 				super a...
-				@nodeName = "H1"
 		h5: class HTMLHeading5Element extends HTMLHeadingElement
 			constructor: (a...) ->
+				a[0] = "H1"
 				super a...
-				@nodeName = "H1"
 		h6: class HTMLHeading6Element extends HTMLHeadingElement
 			constructor: (a...) ->
+				a[0] = "H6"
 				super a...
-				@nodeName = "H6"
 		head: class HTMLHeadElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "HEAD"
 				super a...
-				@nodeName = "HEAD"
 		hr: class HTMLHRElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "HR"
 				super a...
-				@nodeName = "HR"
 		html: class HTMLHtmlElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "HTML"
 				super a...
-				@nodeName = "HTML"
 		iframe: class HTMLIFrameElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "IFRAME"
 				super a...
-				@nodeName = "IFRAME"
 		image: class HTMLImageElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "IMAGE"
 				super a...
-				@nodeName = "IMAGE"
 		input: class HTMLInputElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "INPUT"
 				super a...
-				@nodeName = "INPUT"
 		ins: class HTMLInsElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "INS"
 				super a...
-				@nodeName = "INS"
 		keygen: class HTMLKeygenElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "KEYGEN"
 				super a...
-				@nodeName = "KEYGEN"
 		label: class HTMLLabelElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "LABEL"
 				super a...
-				@nodeName = "LABEL"
 		legend: class HTMLLegendElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "LEGEND"
 				super a...
-				@nodeName = "LEGEND"
 		li: class HTMLLIElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "LI"
 				super a...
-				@nodeName = "LI"
 		link: class HTMLLinkElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "LINK"
 				super a...
-				@nodeName = "LINK"
 		map: class HTMLMapElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "MAP"
 				super a...
-				@nodeName = "MAP"
 		menu: class HTMLMenuElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "MENU"
 				super a...
-				@nodeName = "MENU"
 		meta: class HTMLMetaElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "META"
 				super a...
-				@nodeName = "META"
 		meter: class HTMLMeterElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "METER"
 				super a...
-				@nodeName = "METER"
 		object: class HTMLObjectElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "OBJECT"
 				super a...
-				@nodeName = "OBJECT"
 		ol: class HTMLOListElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "OL"
 				super a...
-				@nodeName = "OL"
 		optgroup: class HTMLOptGroupElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "OPTGROUP"
 				super a...
-				@nodeName = "OPTGROUP"
 		option: class HTMLOptionElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "OPTION"
 				super a...
-				@nodeName = "OPTION"
 		output: class HTMLOutputElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "OUTPUT"
 				super a...
-				@nodeName = "OUTPUT"
 		p: class HTMLParagraphElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "P"
 				super a...
-				@nodeName = "P"
 		param: class HTMLParamElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "PARAM"
 				super a...
-				@nodeName = "PARAM"
 		pre: class HTMLPreElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "PRE"
 				super a...
-				@nodeName = "PRE"
 		progress: class HTMLProgressElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "PROGRESS"
 				super a...
-				@nodeName = "PROGRESS"
 		quote: class HTMLQuoteElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "QUOTE"
 				super a...
-				@nodeName = "QUOTE"
 		script: class HTMLScriptElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "SCRIPT"
 				super a...
-				@nodeName = "SCRIPT"
 		select: class HTMLSelectElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "SELECT"
 				super a...
-				@nodeName = "SELECT"
 		source: class HTMLSourceElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "SOURCE"
 				super a...
-				@nodeName = "SOURCE"
 		style: class HTMLStyleElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "STYLE"
 				super a...
-				@nodeName = "STYLE"
 		table: class HTMLTableElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "TABLE"
 				super a...
-				@nodeName = "TABLE"
 		thead: class HTMLTableHeadElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "THEAD"
 				super a...
-				@nodeName = "THEAD"
 		tbody: class HTMLTableBodyElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "TBODY"
 				super a...
-				@nodeName = "TBODY"
 		tfoot: class HTMLTableFootElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "TFOOT"
 				super a...
-				@nodeName = "TFOOT"
 		td: class HTMLTableCellElement extends HTMLElement
 			constructor: (a...) ->
-				console.log "HTMLTableCellElement constructor", a
+				a[0] = "TD"
 				super a...
-				@nodeName = "TD"
-		th: HTMLTableCellElement
+		th: class HTMLTableHeadElement extends HTMLTableCellElement
 			constructor: (a...) ->
+				a[0] = "TH"
 				super a...
-				@nodeName = "TH"
 		tr: class HTMLTableRowElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "TR"
 				super a...
-				@nodeName = "TR"
 		textarea: class HTMLTextAreaElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "TEXTAREA"
 				super a...
-				@nodeName = "TEXTAREA"
 		title: class HTMLTitleElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "TITLE"
 				super a...
-				@nodeName = "TITLE"
 		ul: class HTMLUListElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "UL"
 				super a...
-				@nodeName = "UL"
 		video: class HTMLVideoElement extends HTMLElement
 			constructor: (a...) ->
+				a[0] = "VIDEO"
 				super a...
-				@nodeName = "VIDEO"
 	}
 	constructor: (a...) ->
-		console.log "Element constructor", a
+		a[2] ?= Node.ELEMENT_NODE
 		super a...
-		@nodeType = Node.ELEMENT_NODE
 		@__defineGetter__ 'tagName', () => @nodeName
 		@__defineGetter__ 'innerHTML', () =>
 			h = []
 			for c in @childNodes
-				h.push c.toString(true, true)
+				h.push c.toString()
 			return h.join('')
 		@__defineGetter__ 'innerText', () =>
 			t = []
@@ -551,45 +575,62 @@ class Element extends Node
 	hasAttribute: (name) ->
 		return name of @attributes
 	setAttribute: (name, value) ->
-		@attributes[name] = value
+		switch name
+			when "class"
+				@className = value
+			when "id"
+				@id = value
+			else
+				@attributes[name] = value
 	removeAttribute: (name) ->
 		delete @attributes[name]
+		switch name
+			when "class"
+				@_private.classes = []
+			when "id"
+				delete @ownerDocument?._private.idMap[@id]
 	# selectors
 	matchesSelector: () ->
 	querySelector: () ->
 	querySelectorAll: () ->
 	# scrolling
-	scrollByLines: NotSupported
-	scrollByPages: NotSupported
-	scrollIntoView: NotSupported
-	scrollIntoViewIfNeeded: NotSupported
+	# scrollByLines: NotSupported
+	# scrollByPages: NotSupported
+	# scrollIntoView: NotSupported
+	# scrollIntoViewIfNeeded: NotSupported
 	# size and position
-	getBoundingClientRect: NotSupported
-	getClientRects: NotSupported
+	# getBoundingClientRect: NotSupported
+	# getClientRects: NotSupported
 	# focus
-	focus: NotSupported
-	blur: NotSupported
+	# focus: NotSupported
+	# blur: NotSupported
 	# render
-	toString: (pretty=true, deep=true, indentLevel = 0) ->
-		name = @nodeName.toLowerCase()
+	toString: (pretty=false, deep=false, indentLevel = 0) ->
+		try
+			name = @nodeName.toLowerCase()
+		catch err
+			console.log @
+			throw err
+		if pretty and deep
+			indent = repeat("  ", indentLevel)
+			newline = "\n"
+		else
+			indent = ""
+			newline = ""
 		attrs = (" #{a}=\"#{@attributes[a]}\"" for a of @attributes).join('')
-		indent = repeat("  ", indentLevel)
-		ret = [indent + "<#{name}#{attrs}>"]
-		r = 1
-		pretty and= deep
 		len = @childNodes.length
-		if pretty and len > 0
-			ret[r++] = "\n"
+		end = ""
+		if len is 0
+			end = "/"
+		ret = [indent + "<#{name}#{attrs}#{end}>" + newline]
+		r = 1
 		if deep
 			for c in @childNodes
 				ret[r++] = c.toString pretty, deep, indentLevel + 1
-		else
-			ret[r++] = "...#{len} children..."
-		if pretty and len > 0
-			ret[r++] = indent
-		ret[r++] = "</#{name}>"
-		if pretty
-			ret[r++] = "\n"
+		else if len > 0
+			ret[r++] = indent + "...#{len} children..." + newline
+		if len > 0
+			ret[r++] = indent + "</#{name}>" + newline
 		ret.join('')
 
 class Attr extends Node
@@ -612,37 +653,50 @@ class Text extends Node
 		super "#text", value, Node.TEXT_NODE
 
 class DocumentFragment extends Node
-	constructor: () ->
-		@nodeName = "#document-fragment"
-		@nodeType = Node.DOCUMENT_FRAGMENT_NODE
+	constructor: (a...) ->
+		a[0] = "#document-fragment"
+		a[2] = Node.DOCUMENT_FRAGMENT_NODE
+		super a...
+		@__defineSetter__ 'parentNode', (v) =>
+			throw Error "DocumentFragment cannot have a parentNode"
+	toString: (pretty=false, deep=false) ->
+		ret = []
+		r = 0
+		for c in @childNodes
+			ret[r++] = c.toString pretty, deep
+		return ret.join('')
 
-class Document extends Node
-	constructor: () ->
-		console.log "Document constructor"
-		super "#document", null, Node.DOCUMENT_NODE
-		@_private = {
+class Document extends Element
+	constructor: (a...) ->
+		a[0] ?= "#document"
+		a[2] = Node.DOCUMENT_NODE
+		super a...
+		@_private = extend @_private, {
 			idMap: {}
 		}
-		@documentElement = null
+		@documentElement = @
 		@documentURI = null
-	adoptNode: NotSupported
-	importNode: NotSupported
-	caretRangeFromPoint: NotSupported
+	# adoptNode: NotSupported
+	# importNode: NotSupported
+	# caretRangeFromPoint: NotSupported
 	createAttribute: (name) ->
 		node = new Attr(name, null)
 		node.ownerDocument = @
-	createAttributeNS: NotSupported
+		node
+	# createAttributeNS: NotSupported
 	createCDATASection: (value) ->
 		node = new CData(value)
 		node.ownerDocument = @
+		node
 	createComment: (value) ->
 		node = new Comment(value)
 		node.ownerDocument = @
+		node
 	createDocumentFragment: () ->
 		node = new DocumentFragment()
 		node.ownerDocument = @
+		node
 	createElement: (name) ->
-		console.log "createElement",name
 		nodeClass = Element.Map[name.toLowerCase()]
 		if not nodeClass?
 			node = new Element.Map['_'](name.toUpperCase())
@@ -650,38 +704,36 @@ class Document extends Node
 			node = new nodeClass()
 		node.ownerDocument = @
 		node
-	createEntityReference: NotSupported
+	# createEntityReference: NotSupported
 	createEvent: (type) ->
 		switch type
 			when "MutationEvents"
 				new MutationEvent()
 			else
 				new Event()
-	createNodeIterator: NotSupported
-	createProcessingInstruction: NotSupported
-	createRange: NotSupported
+	# createNodeIterator: NotSupported
+	# createProcessingInstruction: NotSupported
+	# createRange: NotSupported
 	createTextNode: (text) ->
 		new Text(text)
-	createTreeWalker: NotSupported
-	elementFromPoint: NotSupported
-	evaluate: NotSupported
-	execCommand: NotSupported
-	getCSSCanvasContext: NotSupported
+	# createTreeWalker: NotSupported
+	# elementFromPoint: NotSupported
+	# evaluate: NotSupported
+	# execCommand: NotSupported
+	# getCSSCanvasContext: NotSupported
 	getElementById: (id) ->
 		@_private.idMap[id]
-	getOverrideStyle: NotSupported
-	getSelection: NotSupported
-	queryCommandEnabled: NotSupported
-	queryCommandIndeterm: NotSupported
-	queryCommandState: NotSupported
-	queryCommandSupported: NotSupported
-	queryCommandValue: NotSupported
+	# getOverrideStyle: NotSupported
+	# getSelection: NotSupported
+	# queryCommandEnabled: NotSupported
+	# queryCommandIndeterm: NotSupported
+	# queryCommandState: NotSupported
+	# queryCommandSupported: NotSupported
+	# queryCommandValue: NotSupported
 
 class HTMLDocument extends Document
 	constructor: () ->
-		console.log "HTMLDocument constructor", arguments
-		super
-		@nodeName = "HTML"
+		super "HTML"
 		Document::appendChild.call @,@createElement('head')
 		Document::appendChild.call @,@createElement('body')
 		@head = @childNodes[0]
@@ -693,12 +745,12 @@ class HTMLDocument extends Document
 	removeChild: NotSupported
 	replaceChild: NotSupported
 	# what is all this crap? HTMLDocument has it in Chrome...
-	captureEvents: NotSupported
-	clear: NotSupported
-	close: NotSupported
-	hasFocus: NotSupported
-	open: NotSupported
-	releaseEvents: NotSupported
+	# captureEvents: NotSupported
+	# clear: NotSupported
+	# close: NotSupported
+	# hasFocus: NotSupported
+	# open: NotSupported
+	# releaseEvents: NotSupported
 	# should support these but we don't have an html parser...
 	write: NotSupported
 	writeln: NotSupported
