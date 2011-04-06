@@ -1,6 +1,6 @@
 clear = (a) -> a.length = 0
 get = (a) -> a.join("")
-parse = (input, document, debug) ->
+parse = (input, document) ->
 	i = 0
 	mode = 0
 	fragment = document.createDocumentFragment()
@@ -74,7 +74,7 @@ parse = (input, document, debug) ->
 		for x in result
 			if x.call
 				x()
-			else if /^\d/.test x
+			else if /^\d+$/.test x
 				mode = x
 			else if x.push
 				x.push c
