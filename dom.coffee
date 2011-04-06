@@ -1,3 +1,5 @@
+htmlparse = require("./html/parser").parse
+
 NotSupported = () ->
 	throw Error "NOT_SUPPORTED"
 
@@ -208,6 +210,9 @@ class Node
 				newNode._private.childIndex = i
 				newNode._private.parentNode = @
 				refNode._private.childIndex = i + 1
+				i = 0
+				for c in @childNodes
+					c._private.childIndex = i++
 	appendChild: (node) ->
 		if node.nodeType is Node.DOCUMENT_FRAGMENT_NODE
 			# could be optimized to do a single splice
@@ -223,6 +228,9 @@ class Node
 			node._private.parentNode = null
 			node._private.childIndex = -1
 			@childNodes.splice(i, 1)
+			i = 0
+			for c in @childNodes
+				c._private.childIndex = i++
 		else
 			throw Error "Cannot removeChild a non-child."
 	replaceChild: (newNode, oldNode) ->
@@ -240,7 +248,7 @@ class Node
 				newNode._private.childIndex = i
 				oldNode.parentNode = null
 				@childNodes.splice(i, 1, newNode)
-	toString: (pretty=false,deep=false,indentLevel=0) ->
+	toString: (pretty=false,deep=true,indentLevel=0) ->
 		if pretty
 			indent = repeat("  ", indentLevel)
 			newline = "\n"
@@ -544,6 +552,13 @@ class Element extends Node
 			for c in @childNodes
 				h.push c.toString()
 			return h.join('')
+		@__defineSetter__ 'innerHTML', (v) =>
+			fragment = htmlparse(v, @ownerDocument)
+			for c in @childNodes
+				c._private.parentNode = null
+				c._private.childIndex = -1
+			@childNodes.length = 0
+			@appendChild fragment
 		@__defineGetter__ 'innerText', () =>
 			t = []
 			for c in @childNodes
@@ -605,7 +620,7 @@ class Element extends Node
 	# focus: NotSupported
 	# blur: NotSupported
 	# render
-	toString: (pretty=false, deep=false, indentLevel = 0) ->
+	toString: (pretty=false, deep=true, indentLevel = 0) ->
 		try
 			name = @nodeName.toLowerCase()
 		catch err
@@ -659,7 +674,7 @@ class DocumentFragment extends Node
 		super a...
 		@__defineSetter__ 'parentNode', (v) =>
 			throw Error "DocumentFragment cannot have a parentNode"
-	toString: (pretty=false, deep=false) ->
+	toString: (pretty=false, deep=true) ->
 		ret = []
 		r = 0
 		for c in @childNodes
