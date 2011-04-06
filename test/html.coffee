@@ -1,7 +1,7 @@
 
 dom = require('../dom')
 document = dom.createDocument()
-html = require('../html/parser')
+html = require('../html/min.parser')
 
 test = (input, output, debug = false) ->
 	result = html.parse(input, document, debug).toString(false, true)

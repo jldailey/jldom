@@ -1,119 +1,83 @@
-
-# modes:
-TAG = 0
-ATTRNAME = 1
-BEGINATTRVAL = 2
-DQATTRVAL = 3
-SQATTRVAL = 4
-UQATTRVAL = 5
-TEXT = 6
-ENDTAG = 7
-BEGINTAG = 8
-CLOSETAG = 9
-
+clear = (a) -> a.length = 0
+get = (a) -> a.join("")
 parse = (input, document, debug) ->
 	i = 0
-	mode = TEXT
+	mode = 0
 	fragment = document.createDocumentFragment()
 	cursor = fragment
-	tagName = ""
-	attrName = ""
-	attrVal = ""
-	text = ""
+	tagName = []
+	attrName = []
+	attrVal = []
+	text = []
 	attributes = {}
 	emitNode = () ->
-		node = document.createElement(tagName)
+		node = document.createElement(get(tagName))
 		for a of attributes
 			node.setAttribute(a, attributes[a])
 		cursor.appendChild(node)
 		cursor = node
-		text = ""
-		tagName = ""
-		attrName = ""
-		attrVal = ""
-		attributes = {}
-		mode = TEXT
-	closeNode = () ->
-		cursor = cursor.parentNode
+		clear(text)
+		clear(tagName)
+		clear(attrName)
+		clear(attrVal)
+		for a of attributes
+			delete attributes[a]
+		mode = 0
+	closeNode = () -> cursor = cursor.parentNode
 	emitAttr = () ->
-		attributes[attrName] = attrVal
-		attrName = ""
-		attrVal = ""
-		mode = TAG
+		attributes[get(attrName)] = get(attrVal)
+		clear(attrName)
+		clear(attrVal)
+		mode = 2
 	emitText = () ->
-		cursor.appendChild(document.createTextNode(text))
-		text = ""
+		if text.length > 0
+			cursor.appendChild(document.createTextNode(get(text)))
+			clear(text)
+	states = [
+			"<": [emitText, 1]
+			"": [text, 0]
+		,
+			"/": [9]
+			"": [tagName, 2]
+		,
+			" ": [3]
+			"/": [8]
+			">": [emitNode]
+			"": [tagName]
+		,
+			"=": [4]
+			"/": [8]
+			">": [emitNode]
+			"": [attrName]
+		,
+			'"': [5]
+			"'": [6]
+			"": [attrVal, 7]
+		,
+			'"': [emitAttr]
+			"": [attrVal]
+		,
+			"'": [emitAttr]
+			"": [attrVal]
+		,
+			" ": [emitAttr, 2]
+			">": [emitAttr, emitNode]
+			"/": [emitAttr, 8]
+		,
+			">": [emitNode, closeNode]
+		,
+			">": [closeNode, 0]
+	]
 	while c = input[i++]
-		switch mode
-			when TEXT
-				if c is "<"
-					mode = BEGINTAG
-					if text.length > 0
-						emitText()
-				else
-					text += c
-			when BEGINTAG
-				if c is "/"
-					mode = CLOSETAG
-				else
-					tagName += c
-					mode = TAG
-			when TAG
-				if c is " "
-					mode = ATTRNAME
-				else if c is "/"
-					mode = ENDTAG
-				else if c is ">"
-					emitNode()
-				else
-					tagName += c
-			when ATTRNAME
-				if c is "="
-					mode = BEGINATTRVAL
-				else if c is "/"
-					mode = ENDTAG
-				else if c is ">"
-					emitNode()
-				else
-					attrName += c
-			when BEGINATTRVAL
-				if c is '"'
-					mode = DQATTRVAL
-				else if c is "'"
-					mode = SQATTRVAL
-				else
-					attrVal += c
-					mode = UQATTRVAL
-			when DQATTRVAL
-				if c is '"'
-					emitAttr()
-				else
-					attrVal += c
-			when SQATTRVAL
-				if c is "'"
-					emitAttr()
-				else
-					attrVal += c
-			when UQATTRVAL
-				if c is " "
-					mode = TAG
-					emitAttr()
-				else if c is ">"
-					emitAttr()
-					emitNode()
-				else if c is "/"
-					emitAttr()
-					mode = ENDTAG
-			when ENDTAG
-				if c is ">"
-					emitNode()
-					closeNode()
-			when CLOSETAG
-				if c is ">"
-					closeNode()
-					mode = TEXT
-	# if cursor isnt fragment
-		# throw Error "unclosed tags in input: "+input+", cursor: "+cursor.nodeName
+		m = states[mode]
+		result = m[c] or m[""] or []
+		for x in result
+			if x.call
+				x()
+			else if /^\d/.test x
+				mode = x
+			else if x.push
+				x.push c
 	return cursor
 
 if exports
