@@ -1,3 +1,7 @@
+###
+Copyright (c) 2011 Jesse Dailey <jesse.dailey@gmail.com>
+License: MIT License - http://www.opensource.org/licenses/mit-license.php
+###
 htmlparse = require("./html/parser").parse
 
 NotSupported = () ->
@@ -570,7 +574,7 @@ class Element extends Node
 	getElementsByClassName: (name) ->
 		ret = []
 		for c in @childNodes
-			if name in c._private.classes
+			if c.nodeType is Node.ELEMENT_NODE and name is "*" or name in c._private.classes
 				ret.push c
 			for i in c.getElementsByClassName(name)
 				ret.push i
@@ -579,7 +583,7 @@ class Element extends Node
 		ret = []
 		uname = name.toUpperCase()
 		for c in @childNodes
-			if c.tagName is uname
+			if c.nodeType is Node.ELEMENT_NODE and uname in ["*", c.tagName]
 				ret.push c
 			for i in c.getElementsByTagName(uname)
 				ret.push i
@@ -656,22 +660,20 @@ class Attr extends Node
 		@ownerElement = null
 
 class CData extends Node
-	constructor: (value) ->
-		super "#cdata", value, Node.CDATA_SECTION_NODE
+	constructor: (value, owner) ->
+		super "#cdata", value, Node.CDATA_SECTION_NODE, owner
 
 class Comment extends Node
-	constructor: (value) ->
-		super "#comment", value, Node.COMMENT_NODE
+	constructor: (value, owner) ->
+		super "#comment", value, Node.COMMENT_NODE, owner
 
 class Text extends Node
-	constructor: (value) ->
-		super "#text", value, Node.TEXT_NODE
+	constructor: (value, owner) ->
+		super "#text", value, Node.TEXT_NODE, owner
 
 class DocumentFragment extends Node
-	constructor: (a...) ->
-		a[0] = "#document-fragment"
-		a[2] = Node.DOCUMENT_FRAGMENT_NODE
-		super a...
+	constructor: (owner) ->
+		super "#document-fragment", null, Node.DOCUMENT_FRAGMENT_NODE, owner
 		@__defineSetter__ 'parentNode', (v) =>
 			throw Error "DocumentFragment cannot have a parentNode"
 	toString: (pretty=false, deep=true) ->
@@ -694,31 +696,21 @@ class Document extends Element
 	# adoptNode: NotSupported
 	# importNode: NotSupported
 	# caretRangeFromPoint: NotSupported
-	createAttribute: (name) ->
-		node = new Attr(name, null)
-		node.ownerDocument = @
-		node
+	createAttribute: (name, value=null) ->
+		new Attr(name, value, null, @)
 	# createAttributeNS: NotSupported
 	createCDATASection: (value) ->
-		node = new CData(value)
-		node.ownerDocument = @
-		node
+		new CData(value, @)
 	createComment: (value) ->
-		node = new Comment(value)
-		node.ownerDocument = @
-		node
+		new Comment(value, @)
 	createDocumentFragment: () ->
-		node = new DocumentFragment()
-		node.ownerDocument = @
-		node
+		new DocumentFragment(@)
 	createElement: (name) ->
 		nodeClass = Element.Map[name.toLowerCase()]
 		if not nodeClass?
-			node = new Element.Map['_'](name.toUpperCase())
+			new Element.Map['_'](name.toUpperCase())
 		else
-			node = new nodeClass()
-		node.ownerDocument = @
-		node
+			new nodeClass(null,null,null,@)
 	# createEntityReference: NotSupported
 	createEvent: (type) ->
 		switch type
