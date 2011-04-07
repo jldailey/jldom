@@ -6,8 +6,9 @@ An implementation of the DOM in CoffeeScript.
 Intended for use generating HTML in a Node.js application.
 
 I haven't checked the actual DOM compliance, but everything you need is there:
-+ 110% CSS3 support via NWMatcher.
-+ The world's smallest HTML parser.
+
+* 110% CSS3 support via NWMatcher.
+* The world's smallest HTML parser.
 
 Unlike the similar 'jsdom' project, starting out is trivial.
 
