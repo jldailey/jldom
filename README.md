@@ -12,7 +12,7 @@ I haven't checked the actual DOM compliance, but everything you need is there:
 
 This is not a fork of [jsdom](https://github.com/tmpvar/jsdom).
 
-It assumes the document is going to act like it would in a browser (e.g. it automatically gets a <head> and <body>).
+It assumes the document is going to act like it would in a browser (e.g. it automatically gets a head and body).
 
 No attempt has been made to support XML or Xpath or anything exotic, and no attempt at passing DOM compliance has been made.
 
