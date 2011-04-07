@@ -1,7 +1,10 @@
 
 PWD=/opt/domjs
 BD=/opt/compilejs
-CSSFILES=$(shell echo css/{parser.jison,search.coffee,Makefile})
+
+all: dom.js
+	make -C html
+	make -C css
 
 min.%.js: %.js
 	(cp $< $(BD) && cd $(BD) && make $@ && mv $< $@ $(PWD))
@@ -9,8 +12,7 @@ min.%.js: %.js
 %.js: %.coffee
 	coffee -c $<
 
-css: $(CSSFILES)
-	make -C css
-
 clean:
-	rm -f dom.js min.dom.js css/parser.js css/search.js
+	make -C css clean
+	make -C html clean
+	rm -f dom.js

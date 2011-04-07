@@ -11,3 +11,6 @@ all: parser.js
 
 min.%.js: %.js
 	(cp $< $(BD) && cd $(BD) && make $@ LEVEL=$(LEVEL) && cp $@ $(PWD) && rm $<)
+
+clean:
+	rm -f min.parser.js parser.js
