@@ -17,7 +17,7 @@ It assumes the document is going to act like it would in a browser (e.g. it auto
 No attempt has been made to support XML or Xpath or anything exotic, and no attempt at passing DOM compliance has been made.
 
 Example:
-	document = require('dom').createDocument()
+	document = require('./domjs/dom').createDocument()
 
 	document.body.innerHTML = "<div>Hello, World.</div>"
 
