@@ -3,6 +3,7 @@ Copyright (c) 2011 Jesse Dailey <jesse.dailey@gmail.com>
 License: MIT License - http://www.opensource.org/licenses/mit-license.php
 ###
 htmlparse = require("./html/parser").parse
+matcher = require("./css/nwmatcher")
 
 NotSupported = () ->
 	throw Error "NOT_SUPPORTED"
@@ -109,11 +110,16 @@ class Node
 		@__defineGetter__ 'lastChild', () => @childNodes[-1]
 		@__defineGetter__ 'id', () => @attributes['id']
 		@__defineSetter__ 'id', (value) =>
-			if @ownerDocument?
+			o = @ownerDocument?
+			if o
 				if @attributes.id?
 					delete @ownerDocument._private.idMap[@attributes.id]
-				@ownerDocument._private.idMap[value] = @
-			@attributes.id = value
+			if value in [null, undefined, "undefined"]
+				delete @attributes.id
+			else
+				if o
+					@ownerDocument._private.idMap[value] = @
+				@attributes.id = value
 		@__defineGetter__ 'className', () => @attributes['class']
 		@__defineSetter__ 'className', (value) =>
 			### getElementsByClassName optimization for the future
@@ -127,9 +133,13 @@ class Node
 				for cls in value.split(/ +/)
 					(@ownerDocument._private.classMap[cls] ?= []).push(@)
 			###
-			@attributes['class'] = value
-			# Optimization for getElementsByClassName, cache the split form
-			@_private.classes = value.split(' ')
+			if value in [null, undefined, "undefined"]
+				delete @attributes.class
+				@_private.classes.length = 0
+			else
+				@attributes['class'] = value
+				# Optimization for getElementsByClassName, cache the split form
+				@_private.classes = value.split(' ')
 
 		@listeners = {
 			true: {}
@@ -574,26 +584,35 @@ class Element extends Node
 	getElementsByClassName: (name) ->
 		ret = []
 		for c in @childNodes
-			if c.nodeType is Node.ELEMENT_NODE and name is "*" or name in c._private.classes
-				ret.push c
-			for i in c.getElementsByClassName(name)
-				ret.push i
+			if c.nodeType is Node.ELEMENT_NODE
+				if name is "*" or name in c._private.classes
+					ret.push c
+				for i in c.getElementsByClassName(name)
+					ret.push i
 		return ret
 	getElementsByTagName: (name) ->
 		ret = []
 		uname = name.toUpperCase()
 		for c in @childNodes
-			if c.nodeType is Node.ELEMENT_NODE and uname in ["*", c.tagName]
-				ret.push c
-			for i in c.getElementsByTagName(uname)
-				ret.push i
+			if c.nodeType is Node.ELEMENT_NODE
+				if uname in ["*", c.tagName]
+					ret.push c
+				for i in c.getElementsByTagName(uname)
+					ret.push i
 		return ret
 	# attributes
 	getAttribute: (name) ->
-		return @attributes[name] ? ""
+		@attributes[name] ? ""
+	getAttributeNode: (name) ->
+		n = new Attr(name, @getAttribute(name))
+		n.ownerElement = @
+		n.ownerDocument = @.ownerDocument
+		n
 	hasAttribute: (name) ->
-		return name of @attributes
+		name of @attributes
 	setAttribute: (name, value) ->
+		if value == null
+			@removeAttribute(name)
 		switch name
 			when "class"
 				@className = value
@@ -609,9 +628,12 @@ class Element extends Node
 			when "id"
 				delete @ownerDocument?._private.idMap[@id]
 	# selectors
-	matchesSelector: () ->
-	querySelector: () ->
-	querySelectorAll: () ->
+	matchesSelector: (selector) ->
+		@ownerDocument?._private.matcher.matches(selector, @)
+	querySelector: (selector) ->
+		@ownerDocument?._private.matcher.select(selector, @)[0]
+	querySelectorAll: (selector) ->
+		@ownerDocument?._private.matcher.select(selector, @)
 	# scrolling
 	# scrollByLines: NotSupported
 	# scrollByPages: NotSupported
@@ -626,7 +648,7 @@ class Element extends Node
 	# render
 	toString: (pretty=false, deep=true, indentLevel = 0) ->
 		try
-			name = @nodeName.toLowerCase()
+			name = @nodeName?.toLowerCase()
 		catch err
 			console.log @
 			throw err
@@ -654,7 +676,7 @@ class Element extends Node
 
 class Attr extends Node
 	constructor: (name, value) ->
-		super name, value, Node.ATTRIBUTE_NODE
+		super name, value, Node.ATTRIBUTE_NODE, null
 		@name = @nodeName
 		@value = @nodeValue
 		@ownerElement = null
@@ -688,16 +710,17 @@ class Document extends Element
 		a[0] ?= "#document"
 		a[2] = Node.DOCUMENT_NODE
 		super a...
+		@documentElement = @
+		@documentURI = null
 		@_private = extend @_private, {
 			idMap: {}
 		}
-		@documentElement = @
-		@documentURI = null
 	# adoptNode: NotSupported
 	# importNode: NotSupported
 	# caretRangeFromPoint: NotSupported
-	createAttribute: (name, value=null) ->
-		new Attr(name, value, null, @)
+	createAttribute: NotSupported # (name, value=null) ->
+		# n = new Attr(name, value)
+		# n.ownerDocument = @
 	# createAttributeNS: NotSupported
 	createCDATASection: (value) ->
 		new CData(value, @)
@@ -706,7 +729,7 @@ class Document extends Element
 	createDocumentFragment: () ->
 		new DocumentFragment(@)
 	createElement: (name) ->
-		nodeClass = Element.Map[name.toLowerCase()]
+		nodeClass = Element.Map[name?.toLowerCase()]
 		if not nodeClass?
 			new Element.Map['_'](name.toUpperCase())
 		else
@@ -740,11 +763,14 @@ class Document extends Element
 
 class HTMLDocument extends Document
 	constructor: () ->
-		super "HTML"
+		super "HTML", null, Node.DOCUMENT_NODE, @
 		Document::appendChild.call @,@createElement('head')
 		Document::appendChild.call @,@createElement('body')
 		@head = @childNodes[0]
 		@body = @childNodes[1]
+		@_private = extend @_private, {
+			matcher: matcher.init(global, @)
+		}
 	# over-ride the child manipulators, you can't touch .head or .body
 	hasChildNodes: () -> true
 	insertBefore: NotSupported

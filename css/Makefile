@@ -1,10 +1,8 @@
 
 BD=/opt/compilejs
-PWD=/opt/domjs/html
+PWD=/opt/domjs/css
 # LEVEL=ADVANCED_OPTIMIZATIONS
 LEVEL=SIMPLE_OPTIMIZATIONS
-
-all: parser.js
 
 %.js: %.coffee
 	coffee -c $<

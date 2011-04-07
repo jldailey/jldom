@@ -15,13 +15,12 @@
  *  http://javascript.nwbox.com/NWMatcher/nwmatcher.js
  */
 
-exports.init = 
-function(global) {
+exports.init = function(global, document) {
 
   var version = 'nwmatcher-1.2.4beta',
 
   // processing context
-  doc = global.document,
+  doc = document,
 
   // context root element
   root = doc.documentElement,
@@ -907,8 +906,7 @@ function(global) {
   // compile a comma separated group of selector
   // @mode boolean true for select, false for match
   // return a compiled function
-  compileGroup =
-    function(selector, source, mode) {
+  compileGroup = function(selector, source, mode) {
 
       var i = -1, seen = { }, token,
         parts = typeof selector == 'string' ?
@@ -939,8 +937,7 @@ function(global) {
 
   // compile a CSS3 string selector into ad-hoc javascript matching function
   // @return string (to be compiled)
-  compileSelector =
-    function(selector, source) {
+  compileSelector = function(selector, source) {
 
       var i, a, b, n, k, expr, match, result, status, test, type;
 
@@ -1290,8 +1287,7 @@ function(global) {
 
   // match element with selector
   // @return boolean
-  match =
-    function(element, selector, from, callback) {
+  match = function(element, selector, from, callback) {
 
       var changed, parts, resolver;
 
@@ -1373,8 +1369,7 @@ function(global) {
   // using new Query Selector API
   // or cross-browser client API
   // @return array
-  select =
-    function(selector, from, callback) {
+  select = function(selector, from, callback) {
 
       var i, changed, element, elements, parts, resolver, token;
 
@@ -1613,9 +1608,7 @@ function(global) {
 
   /*------------------------------- PUBLIC API -------------------------------*/
 
-  global.NW || (global.NW = { });
-
-  NW.Dom = {
+  return {
 
     // retrieve element by id attr
     byId: byId,
@@ -1653,16 +1646,14 @@ function(global) {
     configure: configure,
 
     // add or overwrite user defined operators
-    registerOperator:
-      function(symbol, resolver) {
+    registerOperator: function(symbol, resolver) {
         if (!Operators[symbol]) {
           Operators[symbol] = resolver;
         }
       },
 
     // add selector patterns for user defined callbacks
-    registerSelector:
-      function(name, rexp, func) {
+    registerSelector: function(name, rexp, func) {
         if (!Selectors[name]) {
           Selectors[name] = { };
           Selectors[name].Expression = rexp;

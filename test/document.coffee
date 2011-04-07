@@ -56,13 +56,29 @@ fragment.appendChild(document.createElement("div"))
 fragment.appendChild(document.createElement("p"))
 
 assertEqual fragment.childNodes.length, 2, "fragment.childNodes.length"
-assertEqual fragment.toString(), "<div></div><p></p>", "fragment.toString()"
+assertEqual fragment.toString(), "<div/><p/>", "fragment.toString()"
 
 div.appendChild(fragment)
 
-text = document.createTextNode("Hallo!")
+text = document.createTextNode("Harro!")
 div.appendChild(text)
+div.setAttribute("name", "foo")
+assertEqual div.getAttribute("name"), "foo", "div.getAttribute('foo')"
 
-console.log document.toString(true,true)
+attr = div.getAttributeNode("name")
+assertEqual attr.value, "foo", "attr.value"
+assertEqual attr.nodeValue, "foo", "attr.nodeValue"
+
+testSelector = (s, output) ->
+	x = document.querySelectorAll(s)
+	assertEqual x.toString(), output, s
+
+testSelector "p#classTest", '<p id="classTest" class="alpha beta"/>'
+testSelector "p.alpha.beta", '<p id="classTest" class="alpha beta"/>'
+testSelector "p", '<p id="classTest" class="alpha beta"/>,<p/>'
+testSelector "div *", '<span/>,<p id="classTest" class="alpha beta"/>,<div/>,<p/>'
+
+# console.log document.toString(true,true)
+console.log "All tests passed."
 
 # vim: ft=coffee
