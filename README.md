@@ -1,14 +1,12 @@
 
-domjs
+### An implementation of the DOM in CoffeeScript/JavaScript
 
-An implementation of the DOM in CoffeeScript.
-
-Intended for use generating HTML in a Node.js application.
+Intended for use in NodeJS.
 
 I haven't checked the actual DOM compliance, but everything you need is there:
 
-* 110% CSS3 support via NWMatcher.
-* The world's smallest HTML parser.
+* 110% CSS3 support via [NWMatcher](https://github.com/dperini/nwmatcher/).
+* The world's smallest HTML parser (869 bytes minifed).
 
 Unlike the similar 'jsdom' project, starting out is trivial.
 
@@ -35,5 +33,4 @@ Install:
 To compile all the CoffeeScript:
 	cd domjs
 	make
-
 
