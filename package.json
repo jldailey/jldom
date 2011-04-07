@@ -1,0 +1,8 @@
+{
+	"name": "dom",
+	"version": "0.1",
+	"description": "A DOM implementation in CoffeeScript, full CSS3 support.",
+	"keywords": ["dom", "css", "html", "css3"],
+	"homepage": "https://github.com/jldailey/domjs",
+	"author": "Jesse Dailey <jesse.dailey@gmail.com> (jesse-dailey.tumblr.com)"
+}
