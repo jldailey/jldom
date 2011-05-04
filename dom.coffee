@@ -83,68 +83,21 @@ class Node
 	@DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC = 32
 
 	constructor: (name, value = null, type = 1, ownerDocument = null) ->
-		@_private = {
+		@_private =
 			nodeName: null
 			parentNode: null
 			childIndex: -1
 			classes: []
-		}
-		@__defineGetter__ 'nodeName', () => @_private.nodeName
-		@__defineSetter__ 'nodeName', (v) => @_private.nodeName = v?.toUpperCase()
 		@nodeName = name
 		@nodeValue = value
 		@nodeType = type
 		@ownerDocument = ownerDocument
 		@childNodes = []
 		@attributes = {}
-		@__defineGetter__ 'previousSibling', () => @parentNode?.childNodes[@_private.childIndex-1]
-		@__defineSetter__ 'nextSibling', () => @parentNode?.childNodes[@_private.childIndex+1]
-		@__defineGetter__ 'parentNode', () => @_private.parentNode
-		@__defineSetter__ 'parentNode', (v) =>
-			if v isnt null
-				throw Error "Must use one of appendChild, insertBefore, etc. to give a Node a new parent."
-			@_private.parentNode?.removeChild @
-			@_private.parentNode = null
-			@_private.childIndex = -1
-		@__defineGetter__ 'firstChild', () => @childNodes[0]
-		@__defineGetter__ 'lastChild', () => @childNodes[-1]
-		@__defineGetter__ 'id', () => @attributes['id']
-		@__defineSetter__ 'id', (value) =>
-			o = @ownerDocument?
-			if o
-				if @attributes.id?
-					delete @ownerDocument._private.idMap[@attributes.id]
-			if value in [null, undefined, "undefined"]
-				delete @attributes.id
-			else
-				if o
-					@ownerDocument._private.idMap[value] = @
-				@attributes.id = value
-		@__defineGetter__ 'className', () => @attributes['class']
-		@__defineSetter__ 'className', (value) =>
-			### getElementsByClassName optimization for the future
-			if @ownerDocument? # un-map old class values
-				for cls in (@attributes['class'] ? "").split(/ +/)
-					a = (@ownerDocument._private.classMap[cls] ?= [])
-					i = a.indexOf @
-					if i > -1
-						a.splice(i, 1)
-				# map the new class values
-				for cls in value.split(/ +/)
-					(@ownerDocument._private.classMap[cls] ?= []).push(@)
-			###
-			if value in [null, undefined, "undefined"]
-				delete @attributes.class
-				@_private.classes.length = 0
-			else
-				@attributes['class'] = value
-				# Optimization for getElementsByClassName, cache the split form
-				@_private.classes = value.split(' ')
-
-		@listeners = {
+		@listeners =
 			true: {}
 			false: {}
-		}
+
 	# compareDocumentPosition: NotSupported
 	# isDefaultNamespace: NotSupported
 	# isEqualNode: NotSupported
@@ -286,6 +239,42 @@ class Node
 				Element::toString.call @, pretty, deep, indentLevel
 			when Node.DOCUMENT_FRAGMENT_NODE
 				NotSupported() # TODO
+
+
+Node::__defineGetter__ 'nodeName', () -> @_private.nodeName
+Node::__defineSetter__ 'nodeName', (v) -> @_private.nodeName = v?.toUpperCase()
+Node::__defineGetter__ 'previousSibling', () -> @parentNode?.childNodes[@_private.childIndex-1]
+Node::__defineSetter__ 'nextSibling', () -> @parentNode?.childNodes[@_private.childIndex+1]
+Node::__defineGetter__ 'parentNode', () -> @_private.parentNode
+Node::__defineSetter__ 'parentNode', (v) ->
+	if v isnt null
+		throw Error "Must use one of appendChild, insertBefore, etc. to give a Node a new parent."
+	@_private.parentNode?.removeChild @
+	@_private.parentNode = null
+	@_private.childIndex = -1
+Node::__defineGetter__ 'firstChild', () -> @childNodes[0]
+Node::__defineGetter__ 'lastChild', () -> @childNodes[-1]
+Node::__defineGetter__ 'id', () => @attributes['id']
+Node::__defineSetter__ 'id', (value) ->
+	o = @ownerDocument?
+	if o
+		if @attributes.id?
+			delete @ownerDocument._private.idMap[@attributes.id]
+	if value in [null, undefined, "undefined"]
+		delete @attributes.id
+	else
+		if o
+			@ownerDocument._private.idMap[value] = @
+		@attributes.id = value
+Node::__defineGetter__ 'className', () -> @attributes['class']
+Node::__defineSetter__ 'className', (value) ->
+	if value in [null, undefined, "undefined"]
+		delete @attributes.class
+		@_private.classes.length = 0
+	else
+		@attributes['class'] = value
+		# Optimization for getElementsByClassName, cache the split form
+		@_private.classes = value.split(' ')
 
 class Element extends Node
 	@Map = { # map tag names to classes, for use in .createElement
@@ -560,27 +549,6 @@ class Element extends Node
 	constructor: (a...) ->
 		a[2] ?= Node.ELEMENT_NODE
 		super a...
-		@__defineGetter__ 'tagName', () => @nodeName
-		@__defineGetter__ 'innerHTML', () =>
-			h = []
-			for c in @childNodes
-				h.push c.toString()
-			return h.join('')
-		@__defineSetter__ 'innerHTML', (v) =>
-			fragment = htmlparse(v, @ownerDocument)
-			for c in @childNodes
-				c._private.parentNode = null
-				c._private.childIndex = -1
-			@childNodes.length = 0
-			@appendChild fragment
-		@__defineGetter__ 'innerText', () =>
-			t = []
-			for c in @childNodes
-				if c.nodeType in [Node.TEXT_NODE, Node.CDATA_SECTION_NODE]
-					t.push c.toString(false, false)
-				else if c.nodeType isnt Node.COMMENT_NODE
-					t.push c.innerText
-			return t.join('')
 	getElementsByClassName: (name) ->
 		ret = []
 		for c in @childNodes
@@ -674,6 +642,28 @@ class Element extends Node
 			ret[r++] = indent + "</#{name}>" + newline
 		ret.join('')
 
+Element::__defineGetter__ 'tagName', () -> @nodeName
+Element::__defineGetter__ 'innerHTML', () ->
+	h = []
+	for c in @childNodes
+		h.push c.toString()
+	return h.join('')
+Element::__defineSetter__ 'innerHTML', (v) ->
+	fragment = htmlparse(v, @ownerDocument)
+	for c in @childNodes
+		c._private.parentNode = null
+		c._private.childIndex = -1
+	@childNodes.length = 0
+	@appendChild fragment
+Element::__defineGetter__ 'innerText', () ->
+	t = []
+	for c in @childNodes
+		if c.nodeType in [Node.TEXT_NODE, Node.CDATA_SECTION_NODE]
+			t.push c.toString(false, false)
+		else if c.nodeType isnt Node.COMMENT_NODE
+			t.push c.innerText
+	return t.join('')
+
 class Attr extends Node
 	constructor: (name, value) ->
 		super name, value, Node.ATTRIBUTE_NODE, null
@@ -696,14 +686,15 @@ class Text extends Node
 class DocumentFragment extends Node
 	constructor: (owner) ->
 		super "#document-fragment", null, Node.DOCUMENT_FRAGMENT_NODE, owner
-		@__defineSetter__ 'parentNode', (v) =>
-			throw Error "DocumentFragment cannot have a parentNode"
 	toString: (pretty=false, deep=true) ->
 		ret = []
 		r = 0
 		for c in @childNodes
 			ret[r++] = c.toString pretty, deep
 		return ret.join('')
+
+DocumentFragment::__defineSetter__ 'parentNode', (v) ->
+	throw Error "DocumentFragment cannot have a parentNode"
 
 class Document extends Element
 	constructor: (a...) ->
@@ -715,13 +706,6 @@ class Document extends Element
 		@_private = extend @_private, {
 			idMap: {}
 		}
-	# adoptNode: NotSupported
-	# importNode: NotSupported
-	# caretRangeFromPoint: NotSupported
-	createAttribute: NotSupported # (name, value=null) ->
-		# n = new Attr(name, value)
-		# n.ownerDocument = @
-	# createAttributeNS: NotSupported
 	createCDATASection: (value) ->
 		new CData(value, @)
 	createComment: (value) ->
@@ -741,25 +725,10 @@ class Document extends Element
 				new MutationEvent()
 			else
 				new Event()
-	# createNodeIterator: NotSupported
-	# createProcessingInstruction: NotSupported
-	# createRange: NotSupported
 	createTextNode: (text) ->
 		new Text(text)
-	# createTreeWalker: NotSupported
-	# elementFromPoint: NotSupported
-	# evaluate: NotSupported
-	# execCommand: NotSupported
-	# getCSSCanvasContext: NotSupported
 	getElementById: (id) ->
 		@_private.idMap[id]
-	# getOverrideStyle: NotSupported
-	# getSelection: NotSupported
-	# queryCommandEnabled: NotSupported
-	# queryCommandIndeterm: NotSupported
-	# queryCommandState: NotSupported
-	# queryCommandSupported: NotSupported
-	# queryCommandValue: NotSupported
 
 class HTMLDocument extends Document
 	constructor: () ->
@@ -787,68 +756,6 @@ class HTMLDocument extends Document
 	# should support these but we don't have an html parser...
 	write: NotSupported
 	writeln: NotSupported
-
-### Document Traversal not supported yet
-	class TreeWalker
-		constructor: (root, what, filter) ->
-			@root = root
-			@currentNode = root
-			@whatToShow = what
-			@filter = filter
-		parentNode: () ->
-			@currentNode = @currentNode.parentNode
-		firstChild: () ->
-			@currentNode = @currentNode.firstChild
-		lastChild: () ->
-			@currentNode = @currentNode.lastChild
-		previousSibling: () ->
-			@currentNode = @currentNode.previousSibling
-		nextSibling: () ->
-			@currentNode = @currentNode.nextSibling
-		nextNode: () ->
-			@currentNode = @currentNode.nextSibling or @currentNode.childNodes[0]
-		previousNode: () ->
-			if @currentNode is @root
-				@currentNode = @currentNode.previousSibling
-			else
-				@currentNode = @currentNode.previousSibling or @currentNode.parentNode
-	class NodeFilter
-		# Constants returned by acceptNode
-		FILTER_ACCEPT = 1
-		FILTER_REJECT = 2
-		FILTER_SKIP   = 3
-		# Constants for whatToShow
-		SHOW_ALL = 0xFFFFFFFF
-		SHOW_ELEMENT = 0x00000001
-		SHOW_ATTRIBUTE = 0x00000002
-		SHOW_TEXT = 0x00000004
-		SHOW_CDATA_SECTION = 0x00000008
-		SHOW_ENTITY_REFERENCE = 0x00000010
-		SHOW_ENTITY = 0x00000020
-		SHOW_PROCESSING_INSTRUCTION = 0x00000040
-		SHOW_COMMENT = 0x00000080
-		SHOW_DOCUMENT = 0x00000100
-		SHOW_DOCUMENT_TYPE = 0x00000200
-		SHOW_DOCUMENT_FRAGMENT = 0x00000400
-		SHOW_NOTATION = 0x00000800
-		constructor: (whatToShow = NodeFilter.SHOW_ALL) ->
-			@whatToShow = whatToShow
-		acceptNode: (node) ->
-			if (node.nodeType & @whatToShow) isnt 0
-				NodeFilter.FILTER_ACCEPT
-			else
-				NodeFilter.FILTER_REJECT
-	class NodeSkipper extends NodeFilter
-		acceptNode: (node) ->
-			if super(node) is NodeFilter.FILTER_REJECT
-				NodeFilter.FILTER_SKIP
-			NodeFilter.FILTER_ACCEPT
-	class NodeRejecter extends NodeFilter
-		acceptNode: (node) ->
-			if super(node) is NodeFilter.FILTER_ACCEPT
-				NodeFilter.FILTER_REJECT
-			NodeFilter.FILTER_ACCEPT
-###
 
 exports.createDocument = () ->
 	new HTMLDocument()
