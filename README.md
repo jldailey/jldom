@@ -17,6 +17,7 @@ It assumes the document is going to act like it would in a browser (e.g. it auto
 No attempt has been made to support XML or Xpath or anything exotic, and no attempt at passing DOM compliance has been made.
 
 Example:
+
 	document = require('./domjs/dom').createDocument()
 
 	document.body.innerHTML = "<div>Hello, World.</div>"
@@ -30,9 +31,11 @@ Example:
 It should be usably fast, I built it to facilitate generating server-side HTML for a web application.
 
 Install:
+
 	git clone git://github.com/jldailey/domjs.git
 
 To compile all the CoffeeScript:
+
 	cd domjs
 	make
 

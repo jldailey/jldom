@@ -1,7 +1,6 @@
 
 all: dom.js
 	make -C html
-	make -C css
 
 %.js: %.coffee
 	coffee -c $<
