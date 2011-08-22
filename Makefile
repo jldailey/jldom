@@ -2,6 +2,10 @@
 all: dom.js
 	make -C html
 
+test: dom.coffee $(shell ls test/*.coffee)
+	for i in $^; do coffee $$i; done
+	touch test
+
 %.js: %.coffee
 	coffee -c $<
 
