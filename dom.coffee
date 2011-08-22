@@ -254,7 +254,7 @@ Node::__defineSetter__ 'parentNode', (v) ->
 	@_private.childIndex = -1
 Node::__defineGetter__ 'firstChild', () -> @childNodes[0]
 Node::__defineGetter__ 'lastChild', () -> @childNodes[-1]
-Node::__defineGetter__ 'id', () => @attributes['id']
+Node::__defineGetter__ 'id', () -> @attributes['id']
 Node::__defineSetter__ 'id', (value) ->
 	o = @ownerDocument?
 	if o
