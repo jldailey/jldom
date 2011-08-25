@@ -2,7 +2,10 @@
 Copyright (c) 2011 Jesse Dailey <jesse.dailey@gmail.com>
 License: MIT License - http://www.opensource.org/licenses/mit-license.php
 ###
-htmlparse = require("./html/parser").parse
+parser = require("./html/parser")
+htmlparse = parser.parse
+htmlescape = parser.escape
+htmlunescape = parser.unescape
 matcher = require("./css/nwmatcher")
 
 NotSupported = () ->
@@ -239,7 +242,6 @@ class Node
 				Element::toString.call @, pretty, deep, indentLevel
 			when Node.DOCUMENT_FRAGMENT_NODE
 				NotSupported() # TODO
-
 
 Node::__defineGetter__ 'nodeName', () -> @_private.nodeName
 Node::__defineSetter__ 'nodeName', (v) -> @_private.nodeName = v?.toUpperCase()
@@ -549,6 +551,7 @@ class Element extends Node
 	constructor: (a...) ->
 		a[2] ?= Node.ELEMENT_NODE
 		super a...
+		@style = {}
 	getElementsByClassName: (name) ->
 		ret = []
 		for c in @childNodes
@@ -597,7 +600,7 @@ class Element extends Node
 				delete @ownerDocument?._private.idMap[@id]
 	# selectors
 	matchesSelector: (selector) ->
-		@ownerDocument?._private.matcher.matches(selector, @)
+		@ownerDocument?._private.matcher.match(@, selector)
 	querySelector: (selector) ->
 		@ownerDocument?._private.matcher.select(selector, @)[0]
 	querySelectorAll: (selector) ->
@@ -655,14 +658,17 @@ Element::__defineSetter__ 'innerHTML', (v) ->
 		c._private.childIndex = -1
 	@childNodes.length = 0
 	@appendChild fragment
-Element::__defineGetter__ 'innerText', () ->
+
+getAllTextNodes = () ->
 	t = []
 	for c in @childNodes
 		if c.nodeType in [Node.TEXT_NODE, Node.CDATA_SECTION_NODE]
 			t.push c.toString(false, false)
 		else if c.nodeType isnt Node.COMMENT_NODE
-			t.push c.innerText
-	return t.join('')
+			t.push getAllTextNodes(c)
+	return t.join ''
+Element::__defineGetter__ 'innerText', getAllTextNodes
+Element::__defineGetter__ 'textContent', getAllTextNodes
 
 class Attr extends Node
 	constructor: (name, value) ->
@@ -682,6 +688,7 @@ class Comment extends Node
 class Text extends Node
 	constructor: (value, owner) ->
 		super "#text", value, Node.TEXT_NODE, owner
+Text::__defineSetter__ 'data', (v) -> @nodeValue = htmlescape(v)
 
 class DocumentFragment extends Node
 	constructor: (owner) ->
@@ -759,5 +766,12 @@ class HTMLDocument extends Document
 
 exports.createDocument = () ->
 	new HTMLDocument()
+
+exports.registerGlobals = (g) ->
+	g.Element = Element
+	g.Node = Node
+	g.Document = Document
+	g.DocumentFragment = DocumentFragment
+	g.NodeList = Array # HACK: for now...
 
 # vim: ft=coffee
