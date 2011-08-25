@@ -18,6 +18,7 @@ assertEqual(document.nodeType, 9, "document.nodeType")
 div = document.createElement('div')
 assertEqual(div.nodeType, 1, "div.nodeType")
 assertEqual(div.nodeName, "DIV", "div.nodeName")
+assert(div.style, "div should have a style")
 
 document.body.appendChild(div)
 assertEqual(document.body.childNodes.length, 1, "document.body.childNodes.length")
