@@ -2,14 +2,12 @@
 all: dom.js
 	make -C html
 
-test: dom.coffee $(shell ls test/*.coffee)
-	for i in $^; do coffee $$i; done
-	touch test
+test: dom.coffee
+	for i in $(shell ls test/*.coffee); do coffee $$i; done
 
 %.js: %.coffee
 	coffee -c $<
 
 clean:
-	make -C css clean
 	make -C html clean
 	rm -f dom.js
