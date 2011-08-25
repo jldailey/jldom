@@ -28,6 +28,9 @@ assertEqual s.constructor.name, "Array"
 assertEqual s.length, 1
 assertEqual x.constructor.name, "Array"
 assertEqual x.length, 1
+assert matcher.match(c[0], '.c')
+assert matcher.match(c[1], '.c')
+assert !matcher.match(c[1], 'c')
 console.log "All tests passed."
 
 # vim: ft=coffee
