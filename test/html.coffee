@@ -24,6 +24,8 @@ test "<div key='val' />", '<div key="val"/>'
 test '<div id="test"></div>', '<div id="test"/>'
 test '<eval>CurrencyFormat(Application.User.balance)</eval>'
 test '<p>','<p/>'
+test "<div>foo</div>", "<div>foo</div>"
+test '<div>1,2</div>', '<div>1,2</div>'
 console.log "All tests passed."
 
 # vim: ft=coffee
