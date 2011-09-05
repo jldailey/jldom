@@ -288,275 +288,6 @@ Node::__defineSetter__ 'className', (value) ->
 		@_private.classes = value.split(' ')
 
 class Element extends Node
-	@Map = { # map tag names to classes, for use in .createElement
-		_: class HTMLElement extends Element
-			constructor: (a...) ->
-				super a...
-		a: class HTMLAnchorElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "A"
-				super a...
-		area: class HTMLAreaElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "AREA"
-				super a...
-		audio: class HTMLAudioElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "AUDIO"
-				super a...
-		base: class HTMLBaseElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "BASE"
-				super a...
-		blockquote: class HTMLBlockquoteElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "BLOCKQUOTE"
-				super a...
-		body: class HTMLBodyElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "BODY"
-				super a...
-		br: class HTMLBRElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "BR"
-				super a...
-		button: class HTMLButtonElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "BUTTON"
-				super a...
-		canvas: class HTMLCanvasElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "CANVAS"
-				super a...
-		caption: class HTMLTableCaptionElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "CAPTION"
-				super a...
-		col: class HTMLTableColElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "COL"
-				super a...
-		colgroup: class HTMLTableColElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "COLGROUP"
-				super a...
-		del: class HTMLDelElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "DEL"
-				super a...
-		details: class HTMLDetailsElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "DETAILS"
-				super a...
-		div: class HTMLDivElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "DIV"
-				super a...
-		dl: class HTMLDListElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "DL"
-				super a...
-		embed: class HTMLEmbedElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "EMBED"
-				super a...
-		fieldSet: class HTMLFieldSetElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "FIELDSET"
-				super a...
-		form: class HTMLFormElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "FORM"
-				super a...
-		h1: class HTMLHeadingElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "H1"
-				super a...
-		h2: class HTMLHeading2Element extends HTMLHeadingElement
-			constructor: (a...) ->
-				a[0] = "H1"
-				super a...
-		h3: class HTMLHeading3Element extends HTMLHeadingElement
-			constructor: (a...) ->
-				a[0] = "H1"
-				super a...
-		h4: class HTMLHeading4Element extends HTMLHeadingElement
-			constructor: (a...) ->
-				a[0] = "H1"
-				super a...
-		h5: class HTMLHeading5Element extends HTMLHeadingElement
-			constructor: (a...) ->
-				a[0] = "H1"
-				super a...
-		h6: class HTMLHeading6Element extends HTMLHeadingElement
-			constructor: (a...) ->
-				a[0] = "H6"
-				super a...
-		head: class HTMLHeadElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "HEAD"
-				super a...
-		hr: class HTMLHRElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "HR"
-				super a...
-		html: class HTMLHtmlElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "HTML"
-				super a...
-		iframe: class HTMLIFrameElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "IFRAME"
-				super a...
-		image: class HTMLImageElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "IMAGE"
-				super a...
-		input: class HTMLInputElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "INPUT"
-				super a...
-		ins: class HTMLInsElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "INS"
-				super a...
-		keygen: class HTMLKeygenElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "KEYGEN"
-				super a...
-		label: class HTMLLabelElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "LABEL"
-				super a...
-		legend: class HTMLLegendElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "LEGEND"
-				super a...
-		li: class HTMLLIElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "LI"
-				super a...
-		link: class HTMLLinkElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "LINK"
-				super a...
-		map: class HTMLMapElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "MAP"
-				super a...
-		menu: class HTMLMenuElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "MENU"
-				super a...
-		meta: class HTMLMetaElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "META"
-				super a...
-		meter: class HTMLMeterElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "METER"
-				super a...
-		object: class HTMLObjectElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "OBJECT"
-				super a...
-		ol: class HTMLOListElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "OL"
-				super a...
-		optgroup: class HTMLOptGroupElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "OPTGROUP"
-				super a...
-		option: class HTMLOptionElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "OPTION"
-				super a...
-		output: class HTMLOutputElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "OUTPUT"
-				super a...
-		p: class HTMLParagraphElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "P"
-				super a...
-		param: class HTMLParamElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "PARAM"
-				super a...
-		pre: class HTMLPreElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "PRE"
-				super a...
-		progress: class HTMLProgressElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "PROGRESS"
-				super a...
-		quote: class HTMLQuoteElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "QUOTE"
-				super a...
-		script: class HTMLScriptElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "SCRIPT"
-				super a...
-		select: class HTMLSelectElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "SELECT"
-				super a...
-		source: class HTMLSourceElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "SOURCE"
-				super a...
-		style: class HTMLStyleElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "STYLE"
-				super a...
-		table: class HTMLTableElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "TABLE"
-				super a...
-		thead: class HTMLTableHeadElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "THEAD"
-				super a...
-		tbody: class HTMLTableBodyElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "TBODY"
-				super a...
-		tfoot: class HTMLTableFootElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "TFOOT"
-				super a...
-		td: class HTMLTableCellElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "TD"
-				super a...
-		th: class HTMLTableHeadElement extends HTMLTableCellElement
-			constructor: (a...) ->
-				a[0] = "TH"
-				super a...
-		tr: class HTMLTableRowElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "TR"
-				super a...
-		textarea: class HTMLTextAreaElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "TEXTAREA"
-				super a...
-		title: class HTMLTitleElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "TITLE"
-				super a...
-		ul: class HTMLUListElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "UL"
-				super a...
-		video: class HTMLVideoElement extends HTMLElement
-			constructor: (a...) ->
-				a[0] = "VIDEO"
-				super a...
-	}
 	constructor: (a...) ->
 		a[2] ?= Node.ELEMENT_NODE
 		super a...
@@ -627,11 +358,7 @@ class Element extends Node
 	# blur: NotSupported
 	# render
 	toString: (pretty=false, deep=true, indentLevel = 0) ->
-		try
-			name = @nodeName?.toLowerCase()
-		catch err
-			console.log @
-			throw err
+		name = @nodeName?.toLowerCase()
 		if pretty and deep
 			indent = repeat("  ", indentLevel)
 			newline = "\n"
@@ -653,6 +380,276 @@ class Element extends Node
 		if len > 0
 			ret[r++] = indent + "</#{name}>" + newline
 		ret.join('')
+
+ELEMENT_MAP = { # map tag names to classes, for use in .createElement
+	_: class HTMLElement extends Element
+		constructor: (a...) ->
+			super a...
+	a: class HTMLAnchorElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "A"
+			super a...
+	area: class HTMLAreaElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "AREA"
+			super a...
+	audio: class HTMLAudioElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "AUDIO"
+			super a...
+	base: class HTMLBaseElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "BASE"
+			super a...
+	blockquote: class HTMLBlockquoteElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "BLOCKQUOTE"
+			super a...
+	body: class HTMLBodyElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "BODY"
+			super a...
+	br: class HTMLBRElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "BR"
+			super a...
+	button: class HTMLButtonElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "BUTTON"
+			super a...
+	canvas: class HTMLCanvasElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "CANVAS"
+			super a...
+	caption: class HTMLTableCaptionElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "CAPTION"
+			super a...
+	col: class HTMLTableColElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "COL"
+			super a...
+	colgroup: class HTMLTableColElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "COLGROUP"
+			super a...
+	del: class HTMLDelElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "DEL"
+			super a...
+	details: class HTMLDetailsElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "DETAILS"
+			super a...
+	div: class HTMLDivElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "DIV"
+			super a...
+	dl: class HTMLDListElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "DL"
+			super a...
+	embed: class HTMLEmbedElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "EMBED"
+			super a...
+	fieldSet: class HTMLFieldSetElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "FIELDSET"
+			super a...
+	form: class HTMLFormElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "FORM"
+			super a...
+	h1: class HTMLHeadingElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "H1"
+			super a...
+	h2: class HTMLHeading2Element extends HTMLHeadingElement
+		constructor: (a...) ->
+			a[0] = "H1"
+			super a...
+	h3: class HTMLHeading3Element extends HTMLHeadingElement
+		constructor: (a...) ->
+			a[0] = "H1"
+			super a...
+	h4: class HTMLHeading4Element extends HTMLHeadingElement
+		constructor: (a...) ->
+			a[0] = "H1"
+			super a...
+	h5: class HTMLHeading5Element extends HTMLHeadingElement
+		constructor: (a...) ->
+			a[0] = "H1"
+			super a...
+	h6: class HTMLHeading6Element extends HTMLHeadingElement
+		constructor: (a...) ->
+			a[0] = "H6"
+			super a...
+	head: class HTMLHeadElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "HEAD"
+			super a...
+	hr: class HTMLHRElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "HR"
+			super a...
+	html: class HTMLHtmlElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "HTML"
+			super a...
+	iframe: class HTMLIFrameElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "IFRAME"
+			super a...
+	image: class HTMLImageElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "IMAGE"
+			super a...
+	input: class HTMLInputElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "INPUT"
+			super a...
+	ins: class HTMLInsElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "INS"
+			super a...
+	keygen: class HTMLKeygenElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "KEYGEN"
+			super a...
+	label: class HTMLLabelElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "LABEL"
+			super a...
+	legend: class HTMLLegendElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "LEGEND"
+			super a...
+	li: class HTMLLIElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "LI"
+			super a...
+	link: class HTMLLinkElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "LINK"
+			super a...
+	map: class HTMLMapElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "MAP"
+			super a...
+	menu: class HTMLMenuElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "MENU"
+			super a...
+	meta: class HTMLMetaElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "META"
+			super a...
+	meter: class HTMLMeterElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "METER"
+			super a...
+	object: class HTMLObjectElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "OBJECT"
+			super a...
+	ol: class HTMLOListElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "OL"
+			super a...
+	optgroup: class HTMLOptGroupElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "OPTGROUP"
+			super a...
+	option: class HTMLOptionElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "OPTION"
+			super a...
+	output: class HTMLOutputElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "OUTPUT"
+			super a...
+	p: class HTMLParagraphElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "P"
+			super a...
+	param: class HTMLParamElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "PARAM"
+			super a...
+	pre: class HTMLPreElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "PRE"
+			super a...
+	progress: class HTMLProgressElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "PROGRESS"
+			super a...
+	quote: class HTMLQuoteElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "QUOTE"
+			super a...
+	script: class HTMLScriptElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "SCRIPT"
+			super a...
+	select: class HTMLSelectElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "SELECT"
+			super a...
+	source: class HTMLSourceElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "SOURCE"
+			super a...
+	style: class HTMLStyleElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "STYLE"
+			super a...
+	table: class HTMLTableElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "TABLE"
+			super a...
+	thead: class HTMLTableHeadElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "THEAD"
+			super a...
+	tbody: class HTMLTableBodyElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "TBODY"
+			super a...
+	tfoot: class HTMLTableFootElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "TFOOT"
+			super a...
+	td: class HTMLTableCellElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "TD"
+			super a...
+	th: class HTMLTableHeadElement extends HTMLTableCellElement
+		constructor: (a...) ->
+			a[0] = "TH"
+			super a...
+	tr: class HTMLTableRowElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "TR"
+			super a...
+	textarea: class HTMLTextAreaElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "TEXTAREA"
+			super a...
+	title: class HTMLTitleElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "TITLE"
+			super a...
+	ul: class HTMLUListElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "UL"
+			super a...
+	video: class HTMLVideoElement extends HTMLElement
+		constructor: (a...) ->
+			a[0] = "VIDEO"
+			super a...
+}
 
 Element::__defineGetter__ 'tagName', () -> @nodeName
 Element::__defineGetter__ 'innerHTML', () ->
@@ -721,29 +718,22 @@ class Document extends Element
 		@_private = extend @_private, {
 			idMap: {}
 		}
-	createCDATASection: (value) ->
-		new CData(value, @)
-	createComment: (value) ->
-		new Comment(value, @)
-	createDocumentFragment: () ->
-		new DocumentFragment(@)
+	createCDATASection: (value) -> new CData(value, @)
+	createComment: (value) -> new Comment(value, @)
+	createDocumentFragment: () -> new DocumentFragment(@)
 	createElement: (name) ->
-		nodeClass = Element.Map[name?.toLowerCase()]
+		nodeClass = ELEMENT_MAP[name?.toLowerCase()]
 		if not nodeClass?
-			new Element.Map['_'](name.toUpperCase())
+			new ELEMENT_MAP['_'](name.toUpperCase())
 		else
 			new nodeClass(null,null,null,@)
 	# createEntityReference: NotSupported
 	createEvent: (type) ->
 		switch type
-			when "MutationEvents"
-				new MutationEvent()
-			else
-				new Event()
-	createTextNode: (text) ->
-		new Text(text, @)
-	getElementById: (id) ->
-		@_private.idMap[id]
+			when "MutationEvents" then new MutationEvent()
+			else new Event()
+	createTextNode: (text) -> new Text(text, @)
+	getElementById: (id) -> @_private.idMap[id]
 
 class HTMLDocument extends Document
 	constructor: () ->
