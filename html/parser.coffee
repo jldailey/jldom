@@ -13,15 +13,16 @@ parse = (input, document) ->
 	text = []
 	attributes = {}
 	emitNode = () ->
-		node = document.createElement(get(tagName))
-		for a of attributes
-			node.setAttribute(a, attributes[a])
-		cursor.appendChild(node)
-		cursor = node
-		clear(text, tagName, attrName, attrVal)
-		for a of attributes
-			delete attributes[a]
-		mode = 0
+		if tagName.length > 0
+			node = document.createElement(get(tagName))
+			for a of attributes
+				node.setAttribute(a, attributes[a])
+			cursor.appendChild(node)
+			cursor = node
+			clear(text, tagName, attrName, attrVal)
+			for a of attributes
+				delete attributes[a]
+			mode = 0
 	closeNode = () -> cursor = cursor.parentNode
 	emitAttr = () ->
 		attributes[get(attrName)] = get(attrVal)
@@ -76,14 +77,16 @@ parse = (input, document) ->
 				mode = x
 			else if x.push
 				x.push c
+	emitText()
+	emitNode()
 	return cursor
 
 entity_table =
+	"&": "&amp;" # ampersand must be first
 	"™": "&#8482;"
 	"€": "&euro;"
 	" ": "&nbsp;"
 	'"': "&quot;"
-	"&": "&amp;"
 	"<": "&lt;"
 	">": "&gt;"
 	"¡": "&iexcl;"
@@ -355,13 +358,14 @@ entity_table =
 	"ſ": "&#383;"
 
 escape = (input) ->
+	input = unescape input
 	for c of entity_table
 		input = input.replace(c, entity_table[c])
 	input
 
 unescape = (input) ->
 	for c of entity_table
-		input = input.replace(entity_table[c],c)
+		input = input.replace entity_table[c], c
 	input
 
 if exports
