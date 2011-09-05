@@ -11,8 +11,8 @@ global.document = dom.createDocument()
 global.window = global
 
 assert(document?, "document should exist")
-assert(document.body?, "document.body should exist")
 assert(document.head?, "document.head should exist")
+assert(document.body?, "document.body should exist")
 assertEqual(document.nodeType, 9, "document.nodeType")
 
 div = document.createElement('div')
@@ -61,11 +61,25 @@ assertEqual fragment.toString(), "<div/><p/>", "fragment.toString()"
 
 div.appendChild(fragment)
 
+div2 = document.createElement("div")
 text = document.createTextNode("Harro!")
-div.appendChild(text)
+assertEqual(text.nodeValue, "Harro!", "text.nodeValue")
+text.data = "BB"
+assertEqual(text.nodeValue, "BB", "text.nodeValue")
+text.data = "<p>"
+assertEqual(text.nodeValue, "&lt;p&gt;", "text.nodeValue")
+div2.appendChild(text)
+assertEqual(div2.innerHTML, "&lt;p&gt;")
+text.data = "Goodbye!"
+assertEqual(div2.innerHTML, "Goodbye!")
+
+div2 = document.createElement("div")
+text = document.createTextNode("&nbsp;")
+div2.appendChild(text)
+assertEqual(div2.innerHTML, "&nbsp;")
+
 div.setAttribute("name", "foo")
 assertEqual div.getAttribute("name"), "foo", "div.getAttribute('foo')"
-
 attr = div.getAttributeNode("name")
 assertEqual attr.value, "foo", "attr.value"
 assertEqual attr.nodeValue, "foo", "attr.nodeValue"
