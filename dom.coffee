@@ -167,6 +167,8 @@ class Node
 	hasChildNodes: () ->
 		@childNodes.length > 0
 	insertBefore: (newNode, refNode) ->
+		if not refNode?
+			return @appendChild(newNode)
 		if refNode.parentNode isnt @
 			throw Error "Cannot insertBefore a non-child."
 		if newNode.nodeType is Node.DOCUMENT_FRAGMENT_NODE
@@ -183,9 +185,12 @@ class Node
 				i = 0
 				for c in @childNodes
 					c._private.childIndex = i++
+		newNode
 	appendChild: (node) ->
+		if node == null
+			return
 		if node.nodeType is Node.DOCUMENT_FRAGMENT_NODE
-			# could be optimized to do a single splice
+			# TODO: could be optimized to do a single splice, if that was found to matter
 			for c in node.childNodes
 				@appendChild(c)
 		else
@@ -194,31 +199,35 @@ class Node
 			@childNodes.push node
 	removeChild: (node) ->
 		i = node._private.childIndex
-		if node.parentNode is @ and i > -1
+		if i > -1 and node.parentNode is @
 			node._private.parentNode = null
 			node._private.childIndex = -1
 			@childNodes.splice(i, 1)
+			# re-index all the children
 			i = 0
-			for c in @childNodes
+			for c in @childNodes # TODO: this could probably be done with more precision
 				c._private.childIndex = i++
 		else
 			throw Error "Cannot removeChild a non-child."
+		node
 	replaceChild: (newNode, oldNode) ->
 		if oldNode.parentNode isnt @
 			throw Error "Cannot replaceChild a non-child."
 		i = oldNode._private.childIndex
-		if i > -1
-			if newNode.nodeType is Node.DOCUMENT_FRAGMENT_NODE
-				# could be optimized to do a single splice
-				for c in @childNodes
-					@insertBefore(c, oldNode)
-				@removeChild(oldNode)
-			else
-				newNode._private.parentNode = @
-				newNode._private.childIndex = i
-				oldNode.parentNode = null
-				@childNodes.splice(i, 1, newNode)
+		if i < 0
+			throw Error "DOM tree corruption, childIndex is < 0"
+		if newNode.nodeType is Node.DOCUMENT_FRAGMENT_NODE
+			# TODO: could be optimized to do a single splice
+			for c in @childNodes
+				@insertBefore(c, oldNode)
+			return @removeChild(oldNode)
+		newNode._private.parentNode = @
+		newNode._private.childIndex = i
+		oldNode.parentNode = null
+		oldNode._private.childIndex = -1
+		@childNodes.splice(i, 1, newNode)
 	toString: (pretty=false,deep=true,indentLevel=0) ->
+		# console.log("Node::toString[#{@nodeName}] from #{@nodeValue}")
 		if pretty
 			indent = repeat("  ", indentLevel)
 			newline = "\n"
@@ -694,8 +703,7 @@ class DocumentFragment extends Node
 	constructor: (owner) ->
 		super "#document-fragment", null, Node.DOCUMENT_FRAGMENT_NODE, owner
 	toString: (pretty=false, deep=true) ->
-		ret = []
-		r = 0
+		ret = []; r = 0
 		for c in @childNodes
 			ret[r++] = c.toString pretty, deep
 		return ret.join('')
@@ -733,7 +741,7 @@ class Document extends Element
 			else
 				new Event()
 	createTextNode: (text) ->
-		new Text(text)
+		new Text(text, @)
 	getElementById: (id) ->
 		@_private.idMap[id]
 
@@ -773,5 +781,6 @@ exports.registerGlobals = (g) ->
 	g.Document = Document
 	g.DocumentFragment = DocumentFragment
 	g.NodeList = Array # HACK: for now...
+	g.Event = {} # HACK
 
 # vim: ft=coffee
