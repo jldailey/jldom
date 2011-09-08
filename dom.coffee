@@ -287,6 +287,11 @@ Node::__defineSetter__ 'className', (value) ->
 		# Optimization for getElementsByClassName, cache the split form
 		@_private.classes = value.split(' ')
 
+class Entity extends Node
+	constructor: (a...) ->
+		a[2] ?= Node.ENTITY_NODE
+		super a...
+
 class Element extends Node
 	constructor: (a...) ->
 		a[2] ?= Node.ELEMENT_NODE
