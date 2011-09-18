@@ -153,11 +153,14 @@ class Node
 				handler(evt) for handler in list if list
 	cloneNode: (deep = false) ->
 		ret = new Node(@nodeName, @nodeValue, @nodeType, @ownerDocument)
+		for a of @_private
+			ret._private[a] = @_private[a]
 		for a of @attributes
 			ret.attributes[a] = @attributes[a]
 		if deep
 			for c in @childNodes
 				ret.childNodes.push c.cloneNode(true)
+		ret
 	hasAttributes: () ->
 		for a of @attributes
 			return true
@@ -223,7 +226,7 @@ class Node
 			return @removeChild(oldNode)
 		newNode._private.parentNode = @
 		newNode._private.childIndex = i
-		oldNode.parentNode = null
+		oldNode._private.parentNode = null
 		oldNode._private.childIndex = -1
 		@childNodes.splice(i, 1, newNode)
 	toString: (pretty=false,deep=true,indentLevel=0) ->
