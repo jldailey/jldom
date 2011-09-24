@@ -96,7 +96,7 @@ class Node
 		@nodeType = type
 		@ownerDocument = ownerDocument
 		@childNodes = []
-		@attributes = {}
+		@attributes = { }
 		@listeners =
 			true: {}
 			false: {}
@@ -243,7 +243,8 @@ class Node
 			when Node.ELEMENT_NODE
 				Element::toString.call @, pretty, deep, indentLevel
 			when Node.ATTRIBUTE_NODE
-				"#{indent}#{@nodeName}=\"#{@nodeValue}\""
+				if @nodeValue isnt ""
+					"#{indent}#{@nodeName}=\"#{@nodeValue}\""
 			when Node.CDATA_SECTION_NODE
 				"#{indent}<![CDATA[#{@nodeValue}]]>" + newline
 			when Node.COMMENT_NODE
@@ -280,7 +281,7 @@ Node::__defineSetter__ 'id', (value) ->
 		if o
 			@ownerDocument._private.idMap[value] = @
 		@attributes.id = value
-Node::__defineGetter__ 'className', () -> @attributes['class']
+Node::__defineGetter__ 'className', () -> @attributes['class'] or ""
 Node::__defineSetter__ 'className', (value) ->
 	if value in [null, undefined, "undefined"]
 		delete @attributes.class
@@ -373,11 +374,11 @@ class Element extends Node
 		else
 			indent = ""
 			newline = ""
-		attrs = (" #{a}=\"#{@attributes[a]}\"" for a of @attributes).join('')
+		attrs = ((" #{a}=\"#{@attributes[a]}\"" if @attributes[a] isnt "") for a of @attributes).join('')
 		len = @childNodes.length
-		end = ""
-		if len is 0
-			end = "/"
+		end = switch len
+			when 0 then "/"
+			else ""
 		ret = [indent + "<#{name}#{attrs}#{end}>" + newline]
 		r = 1
 		if deep
