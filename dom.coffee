@@ -794,5 +794,9 @@ exports.registerGlobals = (g) ->
 	g.DocumentFragment = DocumentFragment
 	g.NodeList = Array # HACK: for now...
 	g.Event = {} # HACK
+	for tagName of ELEMENT_MAP
+		c = ELEMENT_MAP[tagName]
+		g[c.constructor.name] = c
+
 
 # vim: ft=coffee
