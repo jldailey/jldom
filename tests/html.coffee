@@ -32,7 +32,10 @@ test_parse '<p>','<p/>'
 test_parse "<div>foo</div>", "<div>foo</div>"
 test_parse '<div>1,2</div>', '<div>1,2</div>'
 test_parse 'text', 'text' # parsing lone text as text nodes
+test_parse '<a>Hello<b>World</b></a>'
 test_escape '<p>', '&lt;p&gt;'
+test_escape '&amp;', '&amp;'
+test_escape '?input=foo&amp;bar&key=value', '?input=foo&amp;bar&key=value',
 # TODO: more escape and unescape tests
 console.log "All tests passed."
 
