@@ -201,6 +201,8 @@ class Node
 			node._private.childIndex = @childNodes.length
 			@childNodes.push node
 	removeChild: (node) ->
+		if( typeof node is "number" )
+			node = @childNodes[node]
 		i = node._private.childIndex
 		if i > -1 and node.parentNode is @
 			node._private.parentNode = null
