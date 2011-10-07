@@ -677,16 +677,26 @@ Element::__defineSetter__ 'innerHTML', (v) ->
 	@childNodes.length = 0
 	@appendChild fragment
 
-getAllTextNodes = () ->
+getInnerText = () ->
+	console.log @nodeName
 	t = []
 	for c in @childNodes
+		console.log c.nodeType
 		if c.nodeType in [Node.TEXT_NODE, Node.CDATA_SECTION_NODE]
 			t.push c.toString(false, false)
 		else if c.nodeType isnt Node.COMMENT_NODE
-			t.push getAllTextNodes(c)
+			t.push getInnerText(c)
+		console.log 'done'
 	return t.join ''
-Element::__defineGetter__ 'innerText', getAllTextNodes
-Element::__defineGetter__ 'textContent', getAllTextNodes
+setInnerText = (text) ->
+	while @hasChildNodes()
+		@removeChild(0)
+	@appendChild(new Text(text, @))
+	
+Element::__defineGetter__ 'innerText', getInnerText
+Element::__defineGetter__ 'textContent', getInnerText
+Element::__defineSetter__ 'innerText', setInnerText
+Element::__defineSetter__ 'textContent', setInnerText
 
 class Attr extends Node
 	constructor: (name, value) ->
