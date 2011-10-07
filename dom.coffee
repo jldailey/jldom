@@ -358,16 +358,16 @@ class Element extends Node
 	querySelectorAll: (selector) ->
 		@ownerDocument?._private.matcher.select(selector, @)
 	# scrolling
-	# scrollByLines: NotSupported
-	# scrollByPages: NotSupported
-	# scrollIntoView: NotSupported
-	# scrollIntoViewIfNeeded: NotSupported
+	scrollByLines: NotSupported
+	scrollByPages: NotSupported
+	scrollIntoView: NotSupported
+	scrollIntoViewIfNeeded: NotSupported
 	# size and position
-	# getBoundingClientRect: NotSupported
-	# getClientRects: NotSupported
+	getBoundingClientRect: NotSupported
+	getClientRects: NotSupported
 	# focus
-	# focus: NotSupported
-	# blur: NotSupported
+	focus: NotSupported
+	blur: NotSupported
 	# render
 	toString: (pretty=false, deep=true, indentLevel = 0) ->
 		name = @nodeName?.toLowerCase()
@@ -678,15 +678,15 @@ Element::__defineSetter__ 'innerHTML', (v) ->
 	@appendChild fragment
 
 getInnerText = () ->
-	console.log @nodeName
+	console.log "getInnerText: #{@nodeName}"
 	t = []
 	for c in @childNodes
-		console.log c.nodeType
+		console.log "getInnerText: child type = #{c.nodeType}"
 		if c.nodeType in [Node.TEXT_NODE, Node.CDATA_SECTION_NODE]
 			t.push c.toString(false, false)
 		else if c.nodeType isnt Node.COMMENT_NODE
 			t.push getInnerText(c)
-		console.log 'done'
+		console.log 'getInnerText: done'
 	return t.join ''
 setInnerText = (text) ->
 	while @hasChildNodes()
@@ -749,7 +749,7 @@ class Document extends Element
 			new ELEMENT_MAP['_'](name.toUpperCase())
 		else
 			new nodeClass(name.toUpperCase(),null,null,@)
-	# createEntityReference: NotSupported
+	createEntityReference: NotSupported
 	createEvent: (type) ->
 		switch type
 			when "MutationEvents" then new MutationEvent()
