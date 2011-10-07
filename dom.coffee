@@ -231,6 +231,7 @@ class Node
 		oldNode._private.parentNode = null
 		oldNode._private.childIndex = -1
 		@childNodes.splice(i, 1, newNode)
+		oldNode
 	toString: (pretty=false,deep=true,indentLevel=0) ->
 		# console.log("Node::toString[#{@nodeName}] from #{@nodeValue}")
 		if pretty
