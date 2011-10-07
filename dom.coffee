@@ -748,7 +748,7 @@ class Document extends Element
 		if not nodeClass?
 			new ELEMENT_MAP['_'](name.toUpperCase())
 		else
-			new nodeClass(null,null,null,@)
+			new nodeClass(name.toUpperCase(),null,null,@)
 	# createEntityReference: NotSupported
 	createEvent: (type) ->
 		switch type
