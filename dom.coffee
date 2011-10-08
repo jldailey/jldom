@@ -678,18 +678,16 @@ Element::__defineSetter__ 'innerHTML', (v) ->
 	@appendChild fragment
 
 getInnerText = () ->
-	console.log "getInnerText: #{@nodeName}"
 	t = []
 	for c in @childNodes
-		console.log "getInnerText: child type = #{c.nodeType}"
 		if c.nodeType in [Node.TEXT_NODE, Node.CDATA_SECTION_NODE]
 			t.push c.toString(false, false)
 		else if c.nodeType isnt Node.COMMENT_NODE
-			t.push getInnerText(c)
-		console.log 'getInnerText: done'
+			t.push getInnerText.apply c
 	return t.join ''
 setInnerText = (text) ->
 	while @hasChildNodes()
+		# dont shortcut here, since removeChild does some book-keeping for us
 		@removeChild(0)
 	@appendChild(new Text(text, @))
 	

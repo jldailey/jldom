@@ -77,6 +77,13 @@ div2 = document.createElement("div")
 text = document.createTextNode("&nbsp;")
 div2.appendChild(text)
 assertEqual(div2.innerHTML, "&nbsp;")
+assertEqual(div2.innerText, "&nbsp;")
+span = document.createElement("span")
+text2 = document.createTextNode("hello")
+span.appendChild(text2)
+assertEqual(span.innerText, "hello")
+div2.appendChild(span)
+assertEqual(div2.innerText, "&nbsp;hello")
 
 div.setAttribute("name", "foo")
 assertEqual div.getAttribute("name"), "foo", "div.getAttribute('foo')"
