@@ -794,7 +794,7 @@ exports.registerGlobals = (g) ->
 	g.Event = {} # HACK
 	for tagName of ELEMENT_MAP
 		c = ELEMENT_MAP[tagName]
-		g[c.constructor.name] = c
+		g[c.name] = c
 
 
 # vim: ft=coffee
