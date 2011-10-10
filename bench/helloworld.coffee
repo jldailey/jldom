@@ -27,15 +27,21 @@ measure = (f, n) ->
 	return (Date.now() - start)
 
 run = (f, n, interval) ->
+	sum = 0
+	sum_n = 0
 	for i in [0...n] by interval
 		ms = measure(f, interval)
 		rps = interval * 1000 / ms
-		console.log "Requests per sec:", rps
+		sum += rps
+		sum_n += 1
+	console.log "Avg. requests per sec:", (sum/sum_n)
 
+console.log "Using domjs"
 console.log assign_and_output()
-console.log output()
 run assign_and_output, 1000,200
 
+console.log "Using a raw tree"
+console.log output()
 run output, 100000, 20000
 
 # vim: ft=coffee
