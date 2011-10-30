@@ -285,27 +285,6 @@ Node::__defineSetter__ 'parentNode', (v) ->
 	@_private.childIndex = -1
 Node::__defineGetter__ 'firstChild', () -> @childNodes[0]
 Node::__defineGetter__ 'lastChild', () -> @childNodes[-1]
-Node::__defineGetter__ 'id', () -> @attributes['id']
-Node::__defineSetter__ 'id', (value) ->
-	o = @ownerDocument?
-	if o
-		if @attributes.id?
-			delete @ownerDocument._private.idMap[@attributes.id]
-	if value in [null, undefined, "undefined"]
-		delete @attributes.id
-	else
-		if o
-			@ownerDocument._private.idMap[value] = @
-		@attributes.id = value
-Node::__defineGetter__ 'className', () -> @attributes['class'] or ""
-Node::__defineSetter__ 'className', (value) ->
-	if value in [null, undefined, "undefined"]
-		delete @attributes.class
-		@_private.classes.length = 0
-	else
-		@attributes['class'] = value
-		# Optimization for getElementsByClassName, cache the split form
-		@_private.classes = value.split(' ')
 
 class Entity extends Node
 	constructor: (a...) ->
@@ -338,7 +317,7 @@ class Element extends Node
 		return ret
 	# attributes
 	getAttribute: (name) ->
-		@attributes[name] ? ""
+		@attributes[name] or ""
 	getAttributeNode: (name) ->
 		n = new Attr(name, @getAttribute(name))
 		n.ownerElement = @
@@ -586,7 +565,7 @@ ELEMENT_MAP = { # map tag names to classes, for use in .createElement
 		constructor: (a...) ->
 			a[0] = "OPTGROUP"
 			super a...
-	option: class HTMLOptionElement extends HTMLElement
+	option: class HTMLOptionElement extends HTMLInputElement
 		constructor: (a...) ->
 			a[0] = "OPTION"
 			super a...
@@ -618,7 +597,7 @@ ELEMENT_MAP = { # map tag names to classes, for use in .createElement
 		constructor: (a...) ->
 			a[0] = "SCRIPT"
 			super a...
-	select: class HTMLSelectElement extends HTMLElement
+	select: class HTMLSelectElement extends HTMLInputElement
 		constructor: (a...) ->
 			a[0] = "SELECT"
 			super a...
@@ -708,6 +687,56 @@ Element::__defineGetter__ 'innerText', getInnerText
 Element::__defineGetter__ 'textContent', getInnerText
 Element::__defineSetter__ 'innerText', setInnerText
 Element::__defineSetter__ 'textContent', setInnerText
+Element::__defineGetter__ 'id', () -> @attributes['id']
+Element::__defineSetter__ 'id', (value) ->
+	o = @ownerDocument?
+	if o
+		if @attributes.id?
+			delete @ownerDocument._private.idMap[@attributes.id]
+	if value in [null, undefined, "undefined"]
+		delete @attributes.id
+	else
+		if o
+			@ownerDocument._private.idMap[value] = @
+		@attributes.id = value
+Element::__defineGetter__ 'className', () -> @attributes['class'] or ""
+Element::__defineSetter__ 'className', (value) ->
+	if value in [null, undefined, "undefined"]
+		delete @attributes.class
+		@_private.classes.length = 0
+	else
+		@attributes['class'] = value
+		# Optimization for getElementsByClassName, cache the split form
+		@_private.classes = value.split(' ')
+
+HTMLInputElement::__defineGetter__ 'value', () -> @attributes.value or ""
+HTMLInputElement::__defineSetter__ 'value', (v) -> @setAttribute('value',v)
+
+HTMLSelectElement::__defineGetter__ 'selectedIndex', () ->
+	if not (@_private.selectedIndex? and @_private.selectedIndex < @childNodes.length)
+		for index in [0...@childNodes.length]
+			if @childNodes[index].hasAttribute 'selected'
+				@_private.selectedIndex = index
+	return @_private.selectedIndex or 0
+HTMLSelectElement::__defineSetter__ 'selectedIndex', (v) ->
+	if v < @childNodes.length
+		for index in [0...@childNodes.length]
+			if index is v
+				@childNodes[index].setAttribute('selected','selected')
+			else
+				@childNodes[index].removeAttribute('selected')
+		@_private.selectedIndex = v
+	return @_private.selectedIndex or 0
+
+HTMLOptionElement::__defineGetter__ 'value', () -> if @hasAttribute('value') then @getAttribute('value') else @innerText
+HTMLOptionElement::__defineSetter__ 'value', (v) -> @setAttribute('value',v)
+
+HTMLSelectElement::__defineGetter__ 'value', () -> @childNodes[@selectedIndex]?.value
+HTMLSelectElement::__defineSetter__ 'value', (v) ->
+	for index in [0...@childNodes.length]
+		child = @childNodes[index]
+		if child.value is v
+			@selectedIndex = index
 
 class Attr extends Node
 	constructor: (name, value) ->
@@ -803,8 +832,8 @@ exports.registerGlobals = (g) ->
 	g.Node = Node
 	g.Document = Document
 	g.DocumentFragment = DocumentFragment
-	g.NodeList = Array # HACK: for now...
-	g.Event = {} # HACK
+	g.NodeList = Array # TODO: a real implementation of a (live?) NodeList
+	g.Event = Event
 	for tagName of ELEMENT_MAP
 		c = ELEMENT_MAP[tagName]
 		g[c.name] = c
