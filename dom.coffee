@@ -37,6 +37,7 @@ class Event
 		@cancelable = true
 		@timeStamp = 0
 	stopPropagation: () ->
+	preventDefault: () ->
 	initEvent: (type, canBubble, cancelable) ->
 		@type = type
 		@bubbles = canBubble
@@ -130,13 +131,16 @@ class Node
 			chain.unshift chain[0].parentNode
 		chain.unshift @ownerDocument
 		# CAPTURING_PHASE
+		# the capturing phase proceeds from the top of the DOM downward
+		# firing on all ancestral parents of the target node
 		for ancestor in chain
 			evt.currentTarget = ancestor
 			list = ancestor.listeners[true][evt.type]
 			handler(evt) for handler in list if list
 			break if stopped
 
-		# AT_TARGET
+		# AT_TARGET phase
+		# once the CAPTURE_PHASE is complete, we fire all handlers on the target node
 		evt.eventPhase = Event.AT_TARGET
 		evt.currentTarget = evt.target
 		# fire both capturing and non-capturing handlers
@@ -146,11 +150,21 @@ class Node
 		handler(evt) for handler in list if list
 
 		# BUBBLING_PHASE
+		# after the target itself has been triggered
+		# fire along the ancestral chain in reverse (nearest first, up to the root)
 		if evt.bubbles
 			for ancestor in chain.reverse()
 				evt.currentTarget = ancestor
 				list = ancestor.listeners[false][evt.type]
 				handler(evt) for handler in list if list
+
+		# DEFAULT_PHASE
+		# normally in a browser, there would be some default behavior for an event
+		# for example, a 'click' that bubbled into a link would cause a page request
+		# Event.preventDefault() exists to stop this, but since we have no default actions
+		# there is nothing to prevent and calls to preventDefault() is ignored,
+		# only stopPropagation() has any effect, and only in the CAPTURE_PHASE
+
 	cloneNode: (deep = false) ->
 		ret = new Node(@nodeName, @nodeValue, @nodeType, @ownerDocument)
 		for a of @_private
@@ -233,7 +247,6 @@ class Node
 		@childNodes.splice(i, 1, newNode)
 		oldNode
 	toString: (pretty=false,deep=true,indentLevel=0) ->
-		# console.log("Node::toString[#{@nodeName}] from #{@nodeValue}")
 		if pretty
 			indent = repeat("  ", indentLevel)
 			newline = "\n"
