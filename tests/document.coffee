@@ -6,6 +6,9 @@ assertEqual = (a, b, label) ->
 	if a isnt b
 		throw Error "#{label} (#{a?.toString()}) should equal (#{b?.toString()})"
 
+keys = (o) ->
+	[ i for i of o ]
+
 dom = require('../dom')
 global.document = dom.createDocument()
 global.window = global
@@ -91,6 +94,30 @@ attr = div.getAttributeNode("name")
 assertEqual attr.value, "foo", "attr.value"
 assertEqual attr.nodeValue, "foo", "attr.nodeValue"
 
+input = document.createElement("input")
+input.value = 'bar'
+input.setAttribute('value', 'foo')
+assertEqual input.value, 'foo', 'input.value'
+assertEqual input.value, input.getAttribute('value'), 'input.getAttribute("value")'
+
+select = document.createElement("select")
+optionA = document.createElement("option")
+optionB = document.createElement("option")
+assertEqual optionA.constructor.name, "HTMLOptionElement"
+assertEqual optionA.constructor.__super__.constructor.name, "HTMLInputElement"
+optionA.value = '1'
+optionA.innerText = 'A'
+optionB.innerText = 'B'
+assertEqual optionA.value, '1', 'optionA.value'
+assertEqual optionB.value, 'B', 'optionB.value'
+select.appendChild(optionA)
+select.appendChild(optionB)
+assertEqual select.selectedIndex, 0, 'select.selectedIndex'
+assertEqual select.value, '1', 'select.value'
+select.selectedIndex = 1
+assertEqual select.selectedIndex, 1, 'select.selectedIndex * 2'
+assertEqual select.value, 'B', 'select.value'
+
 testSelector = (s, output) ->
 	x = document.querySelectorAll(s)
 	assertEqual x.toString(), output, s
@@ -100,7 +127,6 @@ testSelector "p.alpha.beta", '<p id="classTest" class="alpha beta"/>'
 testSelector "p", '<p id="classTest" class="alpha beta"/>,<p/>'
 testSelector "div *", '<span/>,<p id="classTest" class="alpha beta"/>,<div/>,<p/>'
 
-# console.log document.toString(true,true)
 console.log "All tests passed."
 
 # vim: ft=coffee
