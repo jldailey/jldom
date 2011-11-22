@@ -12,6 +12,7 @@ parse = (input, document) ->
 	attrVal = []
 	text = []
 	attributes = {}
+	closeNode = () -> cursor = cursor.parentNode
 	emitNode = () ->
 		if tagName.length > 0
 			node = document.createElement(get(tagName))
@@ -32,40 +33,63 @@ parse = (input, document) ->
 		if text.length > 0
 			cursor.appendChild(document.createTextNode(get(text)))
 			clear(text)
-	states = [
+	emitComment = () ->
+		if text.length > 0
+			cursor.appendChild(document.createComment(get(text)))
+			clear(text)
+			closeNode()
+	parseError = () ->
+		throw "Parse error"
+	states = [ # 0: text mode
 			"<": [emitText, 1]
 			"": [text, 0]
-		,
+		, # 1: start reading the tag name
 			"/": [9]
+			"!": [10]
 			"": [tagName, 2]
-		,
+		, # 2: read the rest of the tag name
 			" ": [3]
 			"/": [8]
 			">": [emitNode]
 			"": [tagName]
-		,
+		, # 3: read an attribute name
 			"=": [4]
 			"/": [8]
 			">": [emitNode]
 			"": [attrName]
-		,
+		, # 4: branch on single-, double-quotes, or un-quoted attribute value
 			'"': [5]
 			"'": [6]
 			"": [attrVal, 7]
-		,
+		, # 5: read a double-quoted attribute value
 			'"': [emitAttr]
 			"": [attrVal]
-		,
+		, # 6: read a single-quoted attribute value
 			"'": [emitAttr]
 			"": [attrVal]
-		,
+		, # 7: read an un-quoted attribute value
 			" ": [emitAttr, 2]
 			">": [emitAttr, emitNode]
 			"/": [emitAttr, 8]
-		,
+		, # 8: finish a node
 			">": [emitNode, closeNode]
-		,
+		, # 9
 			">": [closeNode, 0]
+		, # 10: STARTING A COMMENT once
+			"-": [11]
+			"": [parseError, 0]
+		, # 11: STARTING A COMMENT twice
+			"-": [12]
+			"": [parseError, 0]
+		, # 12: COMMENT BODY
+			"-": [13]
+			"": [text, 12]
+		, # 13: ENDING A COMMENT once
+			"-": [14]
+			"": [text, 12]
+		, # 14: ENDING A COMMENT twice
+			">": [emitComment, 0]
+			"": [parseError, 0]
 	]
 	while c = input[i++]
 		m = states[mode]
