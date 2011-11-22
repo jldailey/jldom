@@ -32,6 +32,7 @@ test_parse '<p>','<p/>'
 test_parse "<div>foo</div>", "<div>foo</div>"
 test_parse '<div>1,2</div>', '<div>1,2</div>'
 test_parse 'text', 'text' # parsing lone text as text nodes
+test_parse '<body><!-- comment --><span>foo</span></body>'
 test_parse '<a>Hello<b>World</b></a>'
 test_escape '<p>', '&lt;p&gt;'
 test_escape '&amp;', '&amp;'
