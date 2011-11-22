@@ -34,6 +34,8 @@ test_parse '<div>1,2</div>', '<div>1,2</div>'
 test_parse 'text', 'text' # parsing lone text as text nodes
 test_parse '<body><!-- comment --><span>foo</span></body>'
 test_parse '<a>Hello<b>World</b></a>'
+test_parse '<head><meta charset="utf-8"><span>foo</span></head>', '<head><meta charset="utf-8"/><span>foo</span></head>'
+test_parse '<head><meta charset="utf-8"></meta><span>foo</span></head>', '<head><meta charset="utf-8"/><span>foo</span></head>'
 test_escape '<p>', '&lt;p&gt;'
 test_escape '&amp;', '&amp;'
 test_escape '?input=foo&amp;bar&key=value', '?input=foo&amp;bar&key=value',

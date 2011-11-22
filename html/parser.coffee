@@ -2,6 +2,7 @@ clear = (a...) ->
 	for i in a
 		i.length = 0
 get = (a) -> a.join("")
+nodes_to_autoclose = [ "META", "INPUT", "HR", "BR", "IMG" ]
 parse = (input, document) ->
 	i = 0
 	mode = 0
@@ -24,7 +25,8 @@ parse = (input, document) ->
 			for a of attributes
 				delete attributes[a]
 			mode = 0
-	closeNode = () -> cursor = cursor.parentNode
+			if node.nodeName in nodes_to_autoclose
+				closeNode()
 	emitAttr = () ->
 		attributes[get(attrName)] = get(attrVal)
 		clear(attrName, attrVal)
