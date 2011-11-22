@@ -2,7 +2,8 @@ clear = (a...) ->
 	for i in a
 		i.length = 0
 get = (a) -> a.join("")
-nodes_to_autoclose = [ "META", "INPUT", "HR", "BR", "IMG" ]
+# http://www.w3.org/TR/html-markup/syntax.html#void-element
+void_elements = [ "AREA", "BASE", "BR", "COL", "COMMAND", "EMBED", "HR", "IMG", "INPUT", "KEYGEN", "LINK", "META", "PARAM", "SOURCE", "TRACK", "WBR"]
 parse = (input, document) ->
 	i = 0
 	mode = 0
@@ -13,9 +14,17 @@ parse = (input, document) ->
 	attrVal = []
 	text = []
 	attributes = {}
-	closeNode = () -> cursor = cursor.parentNode
-	emitNode = () ->
+	closeNode = () ->
+		t = get(tagName).toUpperCase()
+		# console.log("closing tag: #{t}")
+		clear(tagName)
+		if t in void_elements
+			# console.log "ignore auto-closed end tag: </#{t}>"
+			return
+		cursor = cursor.parentNode
+	emitNode = (closing) -> () ->
 		if tagName.length > 0
+			# console.log("emitting tag: #{get(tagName)}")
 			node = document.createElement(get(tagName))
 			for a of attributes
 				node.setAttribute(a, attributes[a])
@@ -24,76 +33,81 @@ parse = (input, document) ->
 			clear(text, tagName, attrName, attrVal)
 			for a of attributes
 				delete attributes[a]
-			mode = 0
-			if node.nodeName in nodes_to_autoclose
+			# close nodes that cant have content
+			if closing or node.nodeName in void_elements
+				# console.log "auto-closing tag: #{node.nodeName}"
 				closeNode()
 	emitAttr = () ->
+		# console.log("emitting attr: #{get(attrName)}")
 		attributes[get(attrName)] = get(attrVal)
 		clear(attrName, attrVal)
-		mode = 2
 	emitText = () ->
 		if text.length > 0
+			# console.log("emitting text: #{get(text)}")
 			cursor.appendChild(document.createTextNode(get(text)))
 			clear(text)
 	emitComment = () ->
 		if text.length > 0
+			# console.log("emitting comment: #{get(text)}")
 			cursor.appendChild(document.createComment(get(text)))
 			clear(text)
-			closeNode()
-	parseError = () ->
-		throw "Parse error"
-	states = [ # 0: text mode
+	parseError = (msg) -> () -> throw "Parse error: #{msg}"
+	states = [# 0: text mode
 			"<": [emitText, 1]
 			"": [text, 0]
 		, # 1: start reading the tag name
-			"/": [9]
-			"!": [10]
-			"": [tagName, 2]
+			"/": [9] # this is a </tagName> style close-tag
+			"!": [10] # this is a <! tag
+			"": [tagName, 2] # or read the whole tag name
 		, # 2: read the rest of the tag name
 			" ": [3]
 			"/": [8]
-			">": [emitNode]
+			">": [emitNode(false), 0]
 			"": [tagName]
 		, # 3: read an attribute name
 			"=": [4]
 			"/": [8]
-			">": [emitNode]
+			">": [emitNode(false), 0]
 			"": [attrName]
 		, # 4: branch on single-, double-quotes, or un-quoted attribute value
 			'"': [5]
 			"'": [6]
 			"": [attrVal, 7]
 		, # 5: read a double-quoted attribute value
-			'"': [emitAttr]
+			'"': [emitAttr, 2]
 			"": [attrVal]
 		, # 6: read a single-quoted attribute value
-			"'": [emitAttr]
+			"'": [emitAttr, 2]
 			"": [attrVal]
 		, # 7: read an un-quoted attribute value
 			" ": [emitAttr, 2]
-			">": [emitAttr, emitNode]
+			">": [emitAttr, emitNode(false), 0]
 			"/": [emitAttr, 8]
-		, # 8: finish a node
-			">": [emitNode, closeNode]
-		, # 9
+			"": [attrVal]
+		, # 8: close from a /> tag
+			">": [emitNode(true), 0]
+			"": [parseError("state 8: failed to properly close a /> tag"), 0]
+		, # 9: close from a </tagName> tag
 			">": [closeNode, 0]
-		, # 10: STARTING A COMMENT once
-			"-": [11]
-			"": [parseError, 0]
-		, # 11: STARTING A COMMENT twice
+			"": [tagName]
+		, # 10: process a <! node
+			"-": [11] # start a comment node
+			"": [parseError("state 11: unknown <! tag"), 0]
+		, # 11: start a comment node
 			"-": [12]
-			"": [parseError, 0]
-		, # 12: COMMENT BODY
-			"-": [13]
+			"": [parseError("state 12: invalid <!-- tag"), 0]
+		, # 12: read a comment body
+			"-": [ 13 ]
 			"": [text, 12]
-		, # 13: ENDING A COMMENT once
-			"-": [14]
-			"": [text, 12]
-		, # 14: ENDING A COMMENT twice
-			">": [emitComment, 0]
-			"": [parseError, 0]
+		, # 13: start reading a --> end tag
+			"-": [ 14 ] # really close it
+			"": [(()->text.push('-')), text, 12] # uncapture the - from #12
+		, # 14: finish reading a --> end tag
+			">": [emitComment, 0] # end the comment
+			"": [(()->text.push('--')), text, 12] # uncapture the -- from #12-13
 	]
 	while c = input[i++]
+		# console.log("mode: #{mode} c: #{c}")
 		m = states[mode]
 		result = m[c] or m[""] or []
 		for x in result

@@ -121,7 +121,7 @@ assertEqual select.value, 'B', 'select.value'
 comment = document.createComment("comment")
 assertEqual comment.nodeValue, "comment"
 document.body.appendChild(comment)
-assertEqual document.body.toString(), '<body><div/><div id="testId" name="foo"><span/><p id="classTest" class="alpha beta"/><div/><p/></div><!-- comment --></body>'
+assertEqual document.body.toString(), '<body><div/><div id="testId" name="foo"><span/><p id="classTest" class="alpha beta"/><div/><p/></div><!--comment--></body>'
 
 testSelector = (s, output) ->
 	x = document.querySelectorAll(s)

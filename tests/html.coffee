@@ -4,8 +4,13 @@ document = dom.createDocument()
 html = require('../html/parser')
 
 test_parse = (input, output, debug = false) ->
-	result = html.parse(input, document, debug).toString(false, true)
-	output ?= input
+	message = ""
+	try
+		result = html.parse(input, document, debug).toString(false, true)
+		output ?= input
+	catch err
+		err.message = "Failed to Parse: #{input}, Error: #{err.message}"
+		throw err
 	if result isnt output
 		throw Error result+" !== "+output
 
@@ -35,6 +40,7 @@ test_parse 'text', 'text' # parsing lone text as text nodes
 test_parse '<body><!-- comment --><span>foo</span></body>'
 test_parse '<a>Hello<b>World</b></a>'
 test_parse '<head><meta charset="utf-8"><span>foo</span></head>', '<head><meta charset="utf-8"/><span>foo</span></head>'
+test_parse '<head><meta charset="utf-8"/><span>foo</span></head>', '<head><meta charset="utf-8"/><span>foo</span></head>'
 test_parse '<head><meta charset="utf-8"></meta><span>foo</span></head>', '<head><meta charset="utf-8"/><span>foo</span></head>'
 test_escape '<p>', '&lt;p&gt;'
 test_escape '&amp;', '&amp;'

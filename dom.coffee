@@ -204,7 +204,7 @@ class Node
 					c._private.childIndex = i++
 		newNode
 	appendChild: (node) ->
-		if node == null
+		if not node?
 			return
 		if node.nodeType is Node.DOCUMENT_FRAGMENT_NODE
 			# TODO: could be optimized to do a single splice, if that was found to matter
@@ -264,7 +264,7 @@ class Node
 			when Node.CDATA_SECTION_NODE
 				"#{indent}<![CDATA[#{@nodeValue}]]>" + newline
 			when Node.COMMENT_NODE
-				"#{indent}<!-- #{@nodeValue} -->" + newline
+				"#{indent}<!--#{@nodeValue}-->" + newline
 			when Node.DOCUMENT_TYPE_NODE
 				"#{indent}<!DOCTYPE #{@nodeValue}>" + newline
 			when Node.DOCUMENT_NODE
