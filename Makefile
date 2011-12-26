@@ -1,4 +1,6 @@
-BASE=npm/dom
+VERSION=$(shell cat VERSION)
+PACKAGE_NAME=jdom
+BASE=npm/$(PACKAGE_NAME)
 TEST_FILES=$(BASE)/tests/document.js $(BASE)/tests/html.js $(BASE)/tests/innerHTML.js $(BASE)/tests/nwmatcher.js
 
 all: dom.js
@@ -14,17 +16,17 @@ $(BASE)/%.js: %.coffee
 	@mkdir -p $(BASE)/$(shell python -c 'print("/".join("$<".split("/")[:-1]))')
 	coffee -o $(BASE)/$(shell python -c 'print("/".join("$<".split("/")[:-1]))') -c $<
 
-npm: npm/dom-latest.tgz
+npm: npm/$(PACKAGE_NAME)-$(VERSION).tgz
 
-npm/dom-latest.tgz: $(BASE)/package.json $(BASE)/dom.js $(BASE)/html/parser.js $(TEST_FILES)
+publish: npm
+	scp npm/$(PACKAGE_NAME)-$(VERSION).tgz blingjs.com:/var/www/blingjs.com/downloads/$(PACKAGE_NAME)-$(VERSION).tgz
+
+npm/$(PACKAGE_NAME)-$(VERSION).tgz: $(BASE)/package.json $(BASE)/dom.js $(BASE)/html/parser.js $(TEST_FILES)
 	@cp css/nwmatcher.js $(BASE)/css
-	(cd npm && tar czvf dom-latest.tgz dom)
+	(cd npm && tar czvf $(PACKAGE_NAME)-$(VERSION).tgz $(PACKAGE_NAME))
 
 $(BASE)/package.json: package.json
-	@mkdir -p $(BASE)
-	@mkdir -p $(BASE)/html
-	@mkdir -p $(BASE)/css
-	@mkdir -p $(BASE)/tests
+	@mkdir -p $(BASE) $(BASE)/html $(BASE)/css $(BASE)/tests
 	(VERSION=`cat VERSION`; eval echo \"`sed s/\\"/\\\\\\\\\\"/g package.json`\") > $(BASE)/package.json
 
 clean:

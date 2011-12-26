@@ -5,4 +5,5 @@
 , "homepage": "https://github.com/jldailey/domjs"
 , "author": "Jesse Dailey <jesse.dailey@gmail.com>"
 , "main": "./dom"
+, "scripts" : { "test" : "node tests/document.js" }
 }
