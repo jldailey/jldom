@@ -71,8 +71,8 @@ TestGroup("testing"
 	framework: () -> true
 )
 
-dom = require("../dom")
-dom.registerGlobals(global)
+dom = require "../dom"
+dom.registerGlobals global
 global.dom = dom
 global.document = dom.createDocument()
 global.window = global
