@@ -326,12 +326,12 @@ class Element extends Node
 	hasAttribute: (name) ->
 		name of @attributes
 	setAttribute: (name, value) ->
-		if value == null
+		if not value?
 			@removeAttribute(name)
 		switch name
 			when "class"
 				@className = value
-			when "id"
+			when "id" # TODO: id should just be a getter/setter that proxies to attributes
 				@id = value
 			else
 				@attributes[name] = value
@@ -369,7 +369,8 @@ class Element extends Node
 		else
 			indent = ""
 			newline = ""
-		attrs = ((" #{a}=\"#{@attributes[a]}\"" if @attributes[a] isnt "") for a of @attributes).join('')
+		attrs = ((" #{a}=\"#{@attributes[a]}\"" if a.length > 0 and @attributes[a] isnt "") for a of @attributes).join('')
+		attrs += ((" #{a}" if a.length > 0 and @attributes[a] is "") for a of @attributes).join('')
 		len = @childNodes.length
 		end = switch len
 			when 0 then "/"
@@ -709,8 +710,17 @@ Element::__defineSetter__ 'className', (value) ->
 		# Optimization for getElementsByClassName, cache the split form
 		@_private.classes = value.split(' ')
 
-HTMLInputElement::__defineGetter__ 'value', () -> @attributes.value or ""
+HTMLInputElement::__defineGetter__ 'value', () -> @attributes.value or (if @attributes.type in ['checkbox','radio'] then "on") or ""
 HTMLInputElement::__defineSetter__ 'value', (v) -> @setAttribute('value',v)
+
+HTMLInputElement::__defineGetter__ 'checked', () -> @hasAttribute('checked')
+HTMLInputElement::__defineSetter__ 'checked', (v) ->
+	if v? then @setAttribute('checked','checked')
+	else @removeAttribute('checked')
+HTMLInputElement::__defineGetter__ 'selected', () -> @hasAttribute('selected')
+HTMLInputElement::__defineSetter__ 'selected', (v) ->
+	if v? then @setAttribute('selected','selected')
+	else @removeAttribute('selected')
 
 HTMLSelectElement::__defineGetter__ 'selectedIndex', () ->
 	if not (@_private.selectedIndex? and @_private.selectedIndex < @childNodes.length)

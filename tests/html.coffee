@@ -33,6 +33,7 @@ TestGroup 'parse', {
 	div_attr3: () -> test_parse "<div key='val'/>", '<div key="val"/>'
 	div_attr4: () -> test_parse "<div key='val' />", '<div key="val"/>'
 	div_attr5: () -> test_parse '<div id="test_parse"></div>', '<div id="test_parse"/>'
+	div_attr_empty: () -> test_parse '<input checked/>'
 	text_complex: () -> test_parse '<eval>CurrencyFormat(Application.User.balance)</eval>'
 	p: () -> test_parse '<p>','<p/>'
 	text_bare: () -> test_parse 'text', 'text' # parsing lone text as text nodes

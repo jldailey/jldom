@@ -27,6 +27,14 @@ TestGroup 'document', {
 		div = document.createElement("div")
 		div.setAttribute("name", "foo")
 		assertEqual div.getAttribute("name"), "foo", "div.getAttribute('foo')"
+	attribute_has1: () ->
+		div = document.createElement("div")
+		div.setAttribute("name", "foo")
+		assertEqual div.hasAttribute("name"), true, "div.hasAttribute"
+	attribute_has2: () ->
+		div = document.createElement("div")
+		div.setAttribute("name", "")
+		assertEqual div.hasAttribute("name"), true, "div.hasAttribute"
 	attribute_node: () ->
 		div = document.createElement("div")
 		div.setAttribute("name", "foo")
@@ -129,6 +137,23 @@ TestGroup 'document', {
 		select.selectedIndex = 1
 		assertEqual select.selectedIndex, 1, 'select.selectedIndex * 2'
 		assertEqual select.value, 'B', 'select.value'
+	input_radio: () ->
+		test_doc = global.dom.createDocument()
+		test_doc.body.innerHTML = "<input type='radio' selected>"
+		input = test_doc.body.childNodes[0]
+		assertEqual input.constructor.name, "HTMLInputElement"
+		assertEqual input.hasAttribute('selected'), true, 'input.hasAttr'
+		assertEqual input.getAttribute('selected'), ''
+		assertEqual input.selected, true, 'input.selected'
+		input.removeAttribute('selected')
+		assertEqual input.selected, false, 'input.selected'
+		assertEqual input.value, "on"
+	input_checkbox: () ->
+		test_doc = global.dom.createDocument()
+		test_doc.body.innerHTML = "<input type='checkbox' checked >"
+		input = test_doc.body.childNodes[0]
+		assertEqual input.checked, true, 'input.checked'
+		assertEqual input.value, "on"
 	comment: () ->
 		comment_doc = global.dom.createDocument()
 		comment = comment_doc.createComment("comment text")

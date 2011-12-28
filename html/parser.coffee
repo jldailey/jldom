@@ -38,8 +38,13 @@ parse = (input, document) ->
 				# console.log "auto-closing tag: #{node.nodeName}"
 				closeNode()
 	emitAttr = () ->
-		# console.log("emitting attr: #{get(attrName)}")
-		attributes[get(attrName)] = get(attrVal)
+		# console.log("emitting attr: #{get(attrName)} = '#{get(attrVal)}'")
+		k = get(attrName)
+		v = get(attrVal)
+		if k?
+			k = k.replace(/^\s+/,'')
+		if k isnt ""
+			attributes[k] = v or ""
 		clear(attrName, attrVal)
 	emitText = () ->
 		if text.length > 0
@@ -66,8 +71,9 @@ parse = (input, document) ->
 			"": [tagName]
 		, # 3: read an attribute name
 			"=": [4]
-			"/": [8]
-			">": [emitNode(false), 0]
+			" ": [emitAttr, 3]
+			"/": [emitAttr, 8]
+			">": [emitAttr, emitNode(false), 0]
 			"": [attrName]
 		, # 4: branch on single-, double-quotes, or un-quoted attribute value
 			'"': [5]
