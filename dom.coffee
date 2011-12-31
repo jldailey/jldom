@@ -328,10 +328,10 @@ class Element extends Node
 	setAttribute: (name, value) ->
 		if not value?
 			@removeAttribute(name)
-		switch name
+		switch name # we need to trigger some behavior inside setters here
 			when "class"
 				@className = value
-			when "id" # TODO: id should just be a getter/setter that proxies to attributes
+			when "id"
 				@id = value
 			else
 				@attributes[name] = value
