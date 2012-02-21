@@ -266,9 +266,9 @@ class Node
 			when Node.COMMENT_NODE
 				body = ""
 				if @nodeName is "#CCOMMENT"
-					body = '>'+(c.toString(pretty, deep, indentLevel+1) for c in @childNodes).join('')
-					body += newline+indent+"<![endif]"
-				"#{indent}<!--#{@nodeValue}#{body}-->"
+					body = '>'+newline+(c.toString(pretty, deep, indentLevel+1) for c in @childNodes).join('')
+					body += indent+"<![endif]"
+				"#{indent}<!--#{@nodeValue}#{body}-->" + newline
 			when Node.DOCUMENT_TYPE_NODE
 				"#{indent}<!DOCTYPE #{@nodeValue}>" + newline
 			when Node.DOCUMENT_NODE
