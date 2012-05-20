@@ -105,14 +105,19 @@ TestGroup 'document', {
 	text_appendChild_multiple: () ->
 		text = document.createTextNode("&nbsp;")
 		div = document.createElement("div")
+		# first put some simple text in a div
 		div.appendChild(text)
+		# and confirm we see it properly via the innerHTML/Text getters
 		assertEqual(div.innerHTML, "&nbsp;")
 		assertEqual(div.innerText, "&nbsp;")
+		# then create a span with some more text
 		span = document.createElement("span")
 		text2 = document.createTextNode("hello")
 		span.appendChild(text2)
 		assertEqual(span.innerText, "hello")
+		# and insert it along side the existing text
 		div.appendChild(span)
+		# and confirm that the innerText getter puts the two together
 		assertEqual(div.innerText, "&nbsp;hello")
 	input_value: () ->
 		input = document.createElement("input")
@@ -161,6 +166,14 @@ TestGroup 'document', {
 		assertEqual comment.nodeValue, "comment text"
 		comment_doc.body.appendChild(comment)
 		assertEqual comment_doc.body.toString(), '<body><!--comment text--></body>'
+	conditional: () ->
+		doc = global.dom.createDocument()
+		comment = doc.createCComment("if lt IE 9")
+		script = doc.createElement('script')
+		script.setAttribute('src', 'ie.js')
+		comment.appendChild script
+		doc.body.appendChild(comment)
+		assertEqual doc.body.toString(), '<body><!--[if lt IE 9]><script src="ie.js"/><![endif]--></body>'
 	selector_id: () ->
 		testSelector "p#classTest", '<p id="classTest" class="alpha beta"/>'
 	selector_class: () ->

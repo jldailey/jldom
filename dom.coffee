@@ -267,7 +267,11 @@ class Node
 			when Node.CDATA_SECTION_NODE
 				"#{indent}<![CDATA[#{@nodeValue}]]>" + newline
 			when Node.COMMENT_NODE
-				"#{indent}<!--#{@nodeValue}-->" + newline
+				body = ""
+				if @nodeName is "#CCOMMENT"
+					body = '>'+newline+(c.toString(pretty, deep, indentLevel+1) for c in @childNodes).join('')
+					body += indent+"<![endif]"
+				"#{indent}<!--#{@nodeValue}#{body}-->" + newline
 			when Node.DOCUMENT_TYPE_NODE
 				"#{indent}<!DOCTYPE #{@nodeValue}>" + newline
 			when Node.DOCUMENT_NODE
@@ -766,6 +770,10 @@ class Comment extends Node
 	constructor: (value, owner) ->
 		super "#comment", value, Node.COMMENT_NODE, owner
 
+class CComment extends Node
+	constructor: (value, owner) ->
+		super "#ccomment", "["+value+"]", Node.COMMENT_NODE, owner
+
 class Text extends Node
 	constructor: (value, owner) ->
 		super "#text", value, Node.TEXT_NODE, owner
@@ -795,6 +803,7 @@ class Document extends Element
 		}
 	createCDATASection: (value) -> new CData(value, @)
 	createComment: (value) -> new Comment(value, @)
+	createCComment: (value) -> new CComment(value, @)
 	createDocumentFragment: () -> new DocumentFragment(@)
 	createElement: (name) ->
 		nodeClass = ELEMENT_MAP[name?.toLowerCase()]
