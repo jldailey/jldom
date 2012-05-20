@@ -15,7 +15,8 @@ TestGroup 'document', {
 	createElement3: () -> assert(document.createElement('div').style)
 	appendChild: () ->
 		document.body.appendChild(document.createElement('div'))
-		assertEqual document.body.childNodes.length, 1
+		document.body.appendChild(document.createElement('div'))
+		assertEqual document.body.childNodes.length, 2
 	nodesByTagName: () ->
 		document.body.appendChild(document.createElement('div'))
 		assert document.body.getElementsByTagName('DIV').length > 1

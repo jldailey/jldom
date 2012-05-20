@@ -166,7 +166,10 @@ class Node
 		# only stopPropagation() has any effect, and only in the CAPTURE_PHASE
 
 	cloneNode: (deep = false) ->
-		ret = new Node(@nodeName, @nodeValue, @nodeType, @ownerDocument)
+		ret = switch @.constructor
+			when Text,Comment,CData then new @constructor @nodeValue, @ownerDocument
+			when Attr then new @constructor @nodeName, @nodeValue
+			else new @constructor(@nodeName, @nodeValue, @nodeType, @ownerDocument)
 		for a of @_private
 			ret._private[a] = @_private[a]
 		for a of @attributes
