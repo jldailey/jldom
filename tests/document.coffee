@@ -17,6 +17,22 @@ TestGroup 'document', {
 		document.body.appendChild(document.createElement('div'))
 		document.body.appendChild(document.createElement('div'))
 		assertEqual document.body.childNodes.length, 2
+	removeChild1: () ->
+		doc = dom.createDocument()
+		div = doc.createElement 'div'
+		doc.body.appendChild(div)
+		div.appendChild doc.createElement 'a'
+		div.appendChild doc.createElement 'b'
+		div.appendChild doc.createElement 'c'
+		assertEqual div.childNodes.length, 3
+		assertEqual div.getElementsByTagName('A').length, 1
+		div.removeChild div.childNodes[0]
+		assertEqual div.childNodes.length, 2
+		assertEqual div.getElementsByTagName('A').length, 0
+		div.removeChild div.childNodes[0]
+		assertEqual div.childNodes.length, 1
+		div.removeChild div.childNodes[0]
+		assertEqual div.childNodes.length, 0
 	nodesByTagName: () ->
 		document.body.appendChild(document.createElement('div'))
 		assert document.body.getElementsByTagName('DIV').length > 1
