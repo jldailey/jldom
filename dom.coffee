@@ -8,7 +8,7 @@ htmlescape = parser.escape
 htmlunescape = parser.unescape
 matcher = require("./css/nwmatcher")
 
-NotSupported = () ->
+NotSupported = ->
 	throw Error "NOT_SUPPORTED"
 
 repeat = (s, n) ->
@@ -19,16 +19,22 @@ repeat = (s, n) ->
 		else s + repeat(s, n-1)
 
 extend = (o, p) ->
-	o ?= {}
+	o or= {}
 	for k of p
 		o[k] = p[k]
 	return o
+
+property = (o, k, props) ->
+	Object.defineProperty o, k, extend({
+		enumerable: true
+		configurable: true
+	}, props)
 
 class Event
 	@CAPTURING_PHASE = 1
 	@AT_TARGET = 2
 	@BUBBLING_PHASE = 3
-	constructor: () ->
+	constructor: ->
 		@type = null
 		@target = null
 		@currentTarget = null
@@ -36,8 +42,8 @@ class Event
 		@bubbles = false
 		@cancelable = true
 		@timeStamp = 0
-	stopPropagation: () ->
-	preventDefault: () ->
+	stopPropagation: ->
+	preventDefault: ->
 	initEvent: (type, canBubble, cancelable) ->
 		@type = type
 		@bubbles = canBubble
@@ -48,7 +54,7 @@ class MutationEvent extends Event
 	@MODIFICATION = 1
 	@ADDITION = 2
 	@REMOVAL = 3
-	constructor: () ->
+	constructor: ->
 		@relatedNode = null
 		@prevValue = null
 		@newValue = null
@@ -118,10 +124,10 @@ class Node
 	dispatchEvent: (evt) ->
 		prevented = false
 		stopped = false
-		evt.preventDefault = () ->
+		evt.preventDefault = ->
 			if evt.cancelable
 				prevented = true
-		evt.stopPropagation = () ->
+		evt.stopPropagation = ->
 			stopped = true
 		evt.target = @
 		# compute the chain of capturing nodes
@@ -178,13 +184,13 @@ class Node
 			for c in @childNodes
 				ret.childNodes.push c.cloneNode(true)
 		ret
-	hasAttributes: () ->
+	hasAttributes: ->
 		for a of @attributes
 			return true
 		return false
 	isSameNode: (node) ->
 		node is @
-	hasChildNodes: () ->
+	hasChildNodes: ->
 		@childNodes.length > 0
 	insertBefore: (newNode, refNode) ->
 		if not refNode?
@@ -279,19 +285,25 @@ class Node
 			when Node.DOCUMENT_FRAGMENT_NODE
 				NotSupported() # TODO
 
-Node::__defineGetter__ 'nodeName', () -> @_private.nodeName
-Node::__defineSetter__ 'nodeName', (v) -> @_private.nodeName = v?.toUpperCase()
-Node::__defineGetter__ 'previousSibling', () -> @parentNode?.childNodes[@_private.childIndex-1]
-Node::__defineSetter__ 'nextSibling', () -> @parentNode?.childNodes[@_private.childIndex+1]
-Node::__defineGetter__ 'parentNode', () -> @_private.parentNode
-Node::__defineSetter__ 'parentNode', (v) ->
-	if v isnt null
-		throw Error "Must use one of appendChild, insertBefore, etc. to give a Node a new parent."
-	@_private.parentNode?.removeChild @
-	@_private.parentNode = null
-	@_private.childIndex = -1
-Node::__defineGetter__ 'firstChild', () -> @childNodes[0]
-Node::__defineGetter__ 'lastChild', () -> @childNodes[-1]
+property Node::, 'nodeName',
+	get: -> @_private.nodeName
+	set: (v) -> @_private.nodeName = v?.toUpperCase()
+property Node::, 'previousSibling',
+	get: -> @parentNode?.childNodes[@_private.childIndex-1]
+property Node::, 'nextSibling',
+	get: -> @parentNode?.childNodes[@_private.childIndex+1]
+property Node::, 'parentNode',
+	get: -> @_private.parentNode
+	set: (v) ->
+		if v isnt null
+			throw Error "Must use one of appendChild, insertBefore, etc. to give a Node a new parent."
+		@_private.parentNode?.removeChild @
+		@_private.parentNode = null
+		@_private.childIndex = -1
+property Node::, 'firstChild',
+	get: -> @childNodes[0]
+property Node::, 'lastChild',
+	get: -> @childNodes[@childNodes.length-1]
 
 class Entity extends Node
 	constructor: (a...) ->
@@ -663,21 +675,23 @@ ELEMENT_MAP = { # map tag names to classes, for use in .createElement
 			super a...
 }
 
-Element::__defineGetter__ 'tagName', () -> @nodeName
-Element::__defineGetter__ 'innerHTML', () ->
-	h = []
-	for c in @childNodes
-		h.push c.toString()
-	return h.join('')
-Element::__defineSetter__ 'innerHTML', (v) ->
-	fragment = htmlparse(v, @ownerDocument)
-	for c in @childNodes
-		c._private.parentNode = null
-		c._private.childIndex = -1
-	@childNodes.length = 0
-	@appendChild fragment
+property Element::, 'tagName',
+	get: -> @nodeName
+property Element::, 'innerHTML',
+	get: ->
+		h = []
+		for c in @childNodes
+			h.push c.toString()
+		return h.join('')
+	set: (v) ->
+		fragment = htmlparse(v, @ownerDocument)
+		for c in @childNodes
+			c._private.parentNode = null
+			c._private.childIndex = -1
+		@childNodes.length = 0
+		@appendChild fragment
 
-getInnerText = () ->
+getInnerText = ->
 	t = []
 	for c in @childNodes
 		if c.nodeType in [Node.TEXT_NODE, Node.CDATA_SECTION_NODE]
@@ -690,70 +704,81 @@ setInnerText = (text) ->
 		# dont shortcut here, since removeChild does some book-keeping for us
 		@removeChild(0)
 	@appendChild(new Text(text, @))
-	
-Element::__defineGetter__ 'innerText', getInnerText
-Element::__defineGetter__ 'textContent', getInnerText
-Element::__defineSetter__ 'innerText', setInnerText
-Element::__defineSetter__ 'textContent', setInnerText
-Element::__defineGetter__ 'id', () -> @attributes['id']
-Element::__defineSetter__ 'id', (value) ->
-	o = @ownerDocument?
-	if o
-		if @attributes.id?
-			delete @ownerDocument._private.idMap[@attributes.id]
-	if value in [null, undefined, "undefined"]
-		delete @attributes.id
-	else
+
+property Element::, 'innerText',
+	get: getInnerText
+	set: setInnerText
+property Element::, 'textContent',
+	get: getInnerText
+	set: setInnerText
+property Element::, 'id',
+	get: -> @attributes['id']
+	set: (value) ->
+		o = @ownerDocument?
 		if o
-			@ownerDocument._private.idMap[value] = @
-		@attributes.id = value
-Element::__defineGetter__ 'className', () -> @attributes['class'] or ""
-Element::__defineSetter__ 'className', (value) ->
-	if value in [null, undefined, "undefined"]
-		delete @attributes.class
-		@_private.classes.length = 0
-	else
-		@attributes['class'] = value
-		# Optimization for getElementsByClassName, cache the split form
-		@_private.classes = value.split(' ')
+			if @attributes.id?
+				delete @ownerDocument._private.idMap[@attributes.id]
+		if value in [null, undefined, "undefined"]
+			delete @attributes.id
+		else
+			if o
+				@ownerDocument._private.idMap[value] = @
+			@attributes.id = value
+property Element::, 'className',
+	get: -> @attributes['class'] or ""
+	set: (value) ->
+		if value in [null, undefined, "undefined"]
+			delete @attributes.class
+			@_private.classes.length = 0
+		else
+			@attributes['class'] = value
+			# Optimization for getElementsByClassName, cache the split form
+			@_private.classes = value.split(' ')
 
-HTMLInputElement::__defineGetter__ 'value', () -> @attributes.value or (if @attributes.type in ['checkbox','radio'] then "on") or ""
-HTMLInputElement::__defineSetter__ 'value', (v) -> @setAttribute('value',v)
+property HTMLInputElement::, 'value',
+	get: -> @attributes.value or (if @attributes.type in ['checkbox','radio'] then "on") or ""
+	set: (v) -> @setAttribute('value',v)
 
-HTMLInputElement::__defineGetter__ 'checked', () -> @hasAttribute('checked')
-HTMLInputElement::__defineSetter__ 'checked', (v) ->
-	if v? then @setAttribute('checked','checked')
-	else @removeAttribute('checked')
-HTMLInputElement::__defineGetter__ 'selected', () -> @hasAttribute('selected')
-HTMLInputElement::__defineSetter__ 'selected', (v) ->
-	if v? then @setAttribute('selected','selected')
-	else @removeAttribute('selected')
+property HTMLInputElement::, 'checked',
+	get: -> @hasAttribute('checked')
+	set: (v) ->
+		if v? then @setAttribute('checked','checked')
+		else @removeAttribute('checked')
 
-HTMLSelectElement::__defineGetter__ 'selectedIndex', () ->
-	if not (@_private.selectedIndex? and @_private.selectedIndex < @childNodes.length)
+property HTMLInputElement::, 'selected',
+	get: -> @hasAttribute('selected')
+	set: (v) ->
+		if v? then @setAttribute('selected','selected')
+		else @removeAttribute('selected')
+
+property HTMLSelectElement::, 'selectedIndex',
+	get: ->
+		if not (@_private.selectedIndex? and @_private.selectedIndex < @childNodes.length)
+			for index in [0...@childNodes.length]
+				if @childNodes[index].hasAttribute 'selected'
+					@_private.selectedIndex = index
+		return @_private.selectedIndex or 0
+	set: (v) ->
+		if v < @childNodes.length
+			for index in [0...@childNodes.length]
+				if index is v
+					@childNodes[index].setAttribute('selected','selected')
+				else
+					@childNodes[index].removeAttribute('selected')
+			@_private.selectedIndex = v
+		return @_private.selectedIndex or 0
+
+property HTMLOptionElement::, 'value',
+	get: -> if @hasAttribute('value') then @getAttribute('value') else @innerText
+	set: (v) -> @setAttribute('value',v)
+
+property HTMLSelectElement::, 'value',
+	get: -> @childNodes[@selectedIndex]?.value
+	set: (v) ->
 		for index in [0...@childNodes.length]
-			if @childNodes[index].hasAttribute 'selected'
-				@_private.selectedIndex = index
-	return @_private.selectedIndex or 0
-HTMLSelectElement::__defineSetter__ 'selectedIndex', (v) ->
-	if v < @childNodes.length
-		for index in [0...@childNodes.length]
-			if index is v
-				@childNodes[index].setAttribute('selected','selected')
-			else
-				@childNodes[index].removeAttribute('selected')
-		@_private.selectedIndex = v
-	return @_private.selectedIndex or 0
-
-HTMLOptionElement::__defineGetter__ 'value', () -> if @hasAttribute('value') then @getAttribute('value') else @innerText
-HTMLOptionElement::__defineSetter__ 'value', (v) -> @setAttribute('value',v)
-
-HTMLSelectElement::__defineGetter__ 'value', () -> @childNodes[@selectedIndex]?.value
-HTMLSelectElement::__defineSetter__ 'value', (v) ->
-	for index in [0...@childNodes.length]
-		child = @childNodes[index]
-		if child.value is v
-			@selectedIndex = index
+			child = @childNodes[index]
+			if child.value is v
+				@selectedIndex = index
 
 class Attr extends Node
 	constructor: (name, value) ->
@@ -777,7 +802,8 @@ class CComment extends Node
 class Text extends Node
 	constructor: (value, owner) ->
 		super "#text", value, Node.TEXT_NODE, owner
-Text::__defineSetter__ 'data', (v) -> @nodeValue = htmlescape(v)
+property Text::, 'data',
+	set: (v) -> @nodeValue = htmlescape(v)
 
 class DocumentFragment extends Node
 	constructor: (owner) ->
@@ -788,8 +814,8 @@ class DocumentFragment extends Node
 			ret[r++] = c.toString pretty, deep
 		return ret.join('')
 
-DocumentFragment::__defineSetter__ 'parentNode', (v) ->
-	throw Error "DocumentFragment cannot have a parentNode"
+property DocumentFragment::, 'parentNode',
+	set: (v) -> throw Error "DocumentFragment cannot have a parentNode"
 
 class Document extends Element
 	constructor: (a...) ->
@@ -804,7 +830,7 @@ class Document extends Element
 	createCDATASection: (value) -> new CData(value, @)
 	createComment: (value) -> new Comment(value, @)
 	createCComment: (value) -> new CComment(value, @)
-	createDocumentFragment: () -> new DocumentFragment(@)
+	createDocumentFragment: -> new DocumentFragment(@)
 	createElement: (name) ->
 		nodeClass = ELEMENT_MAP[name?.toLowerCase()]
 		if not nodeClass?
@@ -820,7 +846,7 @@ class Document extends Element
 	getElementById: (id) -> @_private.idMap[id]
 
 class HTMLDocument extends Document
-	constructor: () ->
+	constructor: ->
 		super "HTML", null, Node.DOCUMENT_NODE, @
 		Document::appendChild.call @,@createElement('head')
 		Document::appendChild.call @,@createElement('body')
@@ -830,7 +856,7 @@ class HTMLDocument extends Document
 			matcher: matcher.init(global, @)
 		}
 	# over-ride the child manipulators, you can't touch .head or .body
-	hasChildNodes: () -> true
+	hasChildNodes: -> true
 	insertBefore: NotSupported
 	appendChild: NotSupported
 	removeChild: NotSupported
@@ -846,7 +872,7 @@ class HTMLDocument extends Document
 	write: NotSupported
 	writeln: NotSupported
 
-exports.createDocument = () ->
+exports.createDocument = ->
 	new HTMLDocument()
 
 exports.registerGlobals = (g) ->
