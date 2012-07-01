@@ -57,60 +57,62 @@ parse = (input, document) ->
 			cursor.appendChild(document.createComment(get(text)))
 			clear(text)
 	parseError = (msg) -> () -> throw "Parse error: #{msg}"
-	states = [# 0: text mode
+	states = [
+		{ # 0: text mode
 			"<": [emitText, 1]
 			"": [text, 0]
-		, # 1: start reading the tag name
+		}, { # 1: start reading the tag name
 			"/": [9] # this is a </tagName> style close-tag
 			"!": [10] # this is a <! tag
 			"": [tagName, 2] # or read the whole tag name
-		, # 2: read the rest of the tag name
+		}, { # 2: read the rest of the tag name
 			" ": [3]
 			"/": [8]
 			">": [emitNode(false), 0]
 			"": [tagName]
-		, # 3: read an attribute name
+		}, { # 3: read an attribute name
 			"=": [4]
 			" ": [emitAttr, 3]
 			"/": [emitAttr, 8]
 			">": [emitAttr, emitNode(false), 0]
 			"": [attrName]
-		, # 4: branch on single-, double-quotes, or un-quoted attribute value
+		}, { # 4: branch on single-, double-quotes, or un-quoted attribute value
 			'"': [5]
 			"'": [6]
 			"": [attrVal, 7]
-		, # 5: read a double-quoted attribute value
+		}, { # 5: read a double-quoted attribute value
 			'"': [emitAttr, 2]
 			"": [attrVal]
-		, # 6: read a single-quoted attribute value
+		}, { # 6: read a single-quoted attribute value
 			"'": [emitAttr, 2]
 			"": [attrVal]
-		, # 7: read an un-quoted attribute value
+		}, { # 7: read an un-quoted attribute value
 			" ": [emitAttr, 2]
 			">": [emitAttr, emitNode(false), 0]
 			"/": [emitAttr, 8]
 			"": [attrVal]
-		, # 8: close from a /> tag
+		}, { # 8: close from a /> tag
 			">": [emitNode(true), 0]
 			"": [parseError("state 8: failed to properly close a /> tag"), 0]
-		, # 9: close from a </tagName> tag
+		}, { # 9: close from a </tagName> tag
 			">": [closeNode, 0]
 			"": [tagName]
-		, # 10: process a <! node
+		}, { # 10: process a <! node
 			"-": [11] # start a comment node
 			"": [parseError("state 11: unknown <! tag"), 0]
-		, # 11: start a comment node
+		}, { # 11: start a comment node
 			"-": [12]
 			"": [parseError("state 12: invalid <!-- tag"), 0]
-		, # 12: read a comment body
+		}, { # 12: read a comment body
 			"-": [ 13 ]
 			"": [text, 12]
-		, # 13: start reading a --> end tag
+		}, { # 13: start reading a --> end tag
 			"-": [ 14 ] # really close it
 			"": [(()->text.push('-')), text, 12] # uncapture the - from #12
-		, # 14: finish reading a --> end tag
+		}, { # 14: finish reading a --> end tag
 			">": [emitComment, 0] # end the comment
 			"": [(()->text.push('--')), text, 12] # uncapture the -- from #12-13
+		}
 	]
 	while c = input[i++]
 		# console.log("mode: #{mode} c: #{c}")
@@ -149,7 +151,6 @@ entity_table =
 	"¬": "&not;"
 	"¯": "&shy;"
 	"®": "&reg;"
-	"¯": "&macr;"
 	"°": "&deg;"
 	"±": "&plusmn;"
 	"²": "&sup2;"
@@ -332,50 +333,6 @@ entity_table =
 	"ţ": "&#355;"
 	"Ť": "&#356;"
 	"ť": "&#357;"
-	"Ŧ": "&#358;"
-	"ŧ": "&#359;"
-	"Ũ": "&#360;"
-	"ũ": "&#361;"
-	"Ū": "&#362;"
-	"ū": "&#363;"
-	"Ŭ": "&#364;"
-	"ŭ": "&#365;"
-	"Ů": "&#366;"
-	"ů": "&#367;"
-	"Ű": "&#368;"
-	"ű": "&#369;"
-	"Ų": "&#370;"
-	"ų": "&#371;"
-	"Ŵ": "&#372;"
-	"ŵ": "&#373;"
-	"Ŷ": "&#374;"
-	"ŷ": "&#375;"
-	"Ÿ": "&#376;"
-	"Ź": "&#377;"
-	"ź": "&#378;"
-	"Ż": "&#379;"
-	"ż": "&#380;"
-	"Ž": "&#381;"
-	"ž": "&#382;"
-	"ſ": "&#383;"
-	"Ŕ": "&#340;"
-	"ŕ": "&#341;"
-	"Ŗ": "&#342;"
-	"ŗ": "&#343;"
-	"Ř": "&#344;"
-	"ř": "&#345;"
-	"Ś": "&#346;"
-	"ś": "&#347;"
-	"Ŝ": "&#348;"
-	"ŝ": "&#349;"
-	"Ş": "&#350;"
-	"ş": "&#351;"
-	"Š": "&#352;"
-	"š": "&#353;"
-	"Ţ": "&#354;"
-	"ţ": "&#355;"
-	"Ť": "&#356;"
-	"ť": "&#577;"
 	"Ŧ": "&#358;"
 	"ŧ": "&#359;"
 	"Ũ": "&#360;"

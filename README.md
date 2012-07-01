@@ -18,7 +18,7 @@ No attempt has been made to support XML or Xpath or anything exotic.
 
 Example:
 
-	document = require('./domjs/dom').createDocument()
+	document = require('jldom').createDocument()
 
 	document.body.innerHTML = "<div>Hello, World.</div>"
 
@@ -33,10 +33,11 @@ I currently use it to unit test other javascript code that needs a reasonably we
 
 Install:
 
-	git clone git://github.com/jldailey/domjs.git
+	npm install jldom
 
-To compile all the CoffeeScript:
+Or:
 
-	cd domjs
+	git clone git://github.com/jldailey/jldom.git
+	cd jldom
 	make
 

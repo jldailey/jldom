@@ -1,9 +1,18 @@
-{ "name": "dom"
-, "version": "$VERSION"
+{ "name": "jldom"
+, "version": "0.0.1"
 , "description": "A DOM implementation in CoffeeScript, full CSS3 support."
 , "keywords": ["dom", "css", "html", "css3"]
-, "homepage": "https://github.com/jldailey/domjs"
+, "homepage": "https://github.com/jldailey/jldom"
 , "author": "Jesse Dailey <jesse.dailey@gmail.com>"
-, "main": "./dom"
-, "scripts" : { "test" : "node tests/document.js" }
+, "main": "./lib/dom.js"
+, "scripts": {
+		"build": [
+			"mkdir -p ./lib/html ./lib/css",
+			"coffee -o ./lib -c *.coffee",
+			"coffee -o ./lib/html -c html/parser.coffee",
+			"cp css/nwmatcher.js ./lib/css"
+		],
+		"clean": "rm -rf ./lib/*.js ./lib/css ./lib/html",
+		"postinstall": "npm build"
+	}
 }
