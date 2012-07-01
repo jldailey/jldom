@@ -5,14 +5,15 @@
 , "homepage": "https://github.com/jldailey/jldom"
 , "author": "Jesse Dailey <jesse.dailey@gmail.com>"
 , "main": "./lib/dom.js"
+, "dependencies": { "coffee-script": "*" }
 , "scripts": {
 		"build": [
 			"mkdir -p ./lib/html ./lib/css",
-			"coffee -o ./lib -c *.coffee",
-			"coffee -o ./lib/html -c html/parser.coffee",
+			"node_modules/.bin/coffee -o ./lib -c *.coffee",
+			"node_modules/.bin/coffee -o ./lib/html -c html/parser.coffee",
 			"cp css/nwmatcher.js ./lib/css"
 		],
-		"clean": "rm -rf ./lib/*.js ./lib/css ./lib/html",
+		"clean": "rm -r ./lib",
 		"postinstall": "npm build"
 	}
 }

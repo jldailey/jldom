@@ -8,4 +8,4 @@ test: dom.coffee
 	for i in $(shell ls tests/*.coffee); do coffee $$i; done
 
 clean:
-	rm -f lib/*.js
+	rm -rf ./lib
