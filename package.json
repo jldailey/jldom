@@ -1,5 +1,5 @@
 { "name": "jldom"
-, "version": "0.0.1"
+, "version": "0.0.2"
 , "description": "A DOM implementation in CoffeeScript, full CSS3 support."
 , "keywords": ["dom", "css", "html", "css3"]
 , "homepage": "https://github.com/jldailey/jldom"
@@ -7,13 +7,8 @@
 , "main": "./lib/dom.js"
 , "dependencies": { "coffee-script": "*" }
 , "scripts": {
-		"build": [
-			"mkdir -p ./lib/html ./lib/css",
-			"node_modules/.bin/coffee -o ./lib -c *.coffee",
-			"node_modules/.bin/coffee -o ./lib/html -c html/parser.coffee",
-			"cp css/nwmatcher.js ./lib/css"
-		],
+		"build": "./node_modules/.bin/coffee -o ./lib -c *.coffee html/*.coffee; cp css/nwmatcher.js ./lib/css",
 		"clean": "rm -r ./lib",
-		"postinstall": "npm build"
+		"postinstall": "npm run-script build"
 	}
 }

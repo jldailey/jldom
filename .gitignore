@@ -1,3 +1,2 @@
-dom.js
-html/parser.js
-npm
+lib/
+node_modules/
