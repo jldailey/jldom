@@ -4,10 +4,12 @@ all: lib/dom.js
 
 lib/dom.js: html/parser.js css/nwmatcher.js dom.coffee
 	coffee -o ./lib -c dom.coffee
-	cat html/parser.js css/nwmatcher.js $@ > lib/tmp.js
+	echo "var privates = {};" > lib/tmp.js
+	cat html/parser.js css/nwmatcher.js | sed -E 's/exports/privates/g' >> lib/tmp.js
+	cat lib/dom.js >> lib/tmp.js
 	rm html/parser.js
 	mv lib/tmp.js $@
-	sed -e 's/= require[^;]*;/= exports;/g' -i .bak $@
+	sed -e 's/= require[^;]*;/= privates;/g' -i .bak $@
 	rm lib/*.bak
 	$(JAVA) -jar ./build/yuicompressor.jar lib/dom.js -v -o lib/dom.js
 
