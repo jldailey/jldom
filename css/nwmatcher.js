@@ -17,10 +17,10 @@
 
 exports.init = function(global, document) {
 
-  var version = 'nwmatcher-1.2.4beta',
+  // var version = 'nwmatcher-1.2.4beta',
 
   // processing context
-  doc = document,
+  var doc = document,
 
   // context root element
   root = doc.documentElement,
@@ -167,7 +167,7 @@ exports.init = function(global, document) {
 
   // for pseudos, ids and in excess whitespace removal
   reClassValue = new RegExp('(' + identifier + ')'),
-  reIdSelector = new RegExp('#(' + identifier + ')'),
+  // reIdSelector = new RegExp('#(' + identifier + ')'),
   reWhiteSpace = /[\x20\t\n\r\f]+/g,
 
   // match missing R/L context
@@ -672,10 +672,9 @@ exports.init = function(global, document) {
         byTagRaw(tag, from), 0);
     } :
     function(tag, from) {
-      var i = -1, data = [ ],
+      var i = j = -1, data = [ ],
         element, elements = (from || doc).getElementsByTagName(tag);
       if (tag == '*') {
-        var j = -1;
         while ((element = elements[++i])) {
           if (element.nodeName > '@')
             data[++j] = element;
@@ -854,10 +853,11 @@ exports.init = function(global, document) {
   // control user notifications
   emit =
     function(message) {
+			var console, err;
       if (VERBOSITY) {
         // FF/Safari/Opera DOMException.SYNTAX_ERR = 12
         if (typeof global.DOMException !== 'undefined') {
-          var err = new Error();
+          err = new Error();
           err.message = 'SYNTAX_ERR: (Selectors) ' + message;
           err.code = 12;
           throw err;
@@ -865,7 +865,7 @@ exports.init = function(global, document) {
           throw new Error(12, 'SYNTAX_ERR: (Selectors) ' + message);
         }
       } else {
-        var console = global.console;
+        console = global.console;
         if (console && console.log) {
           console.log(message);
         } else {
@@ -1371,7 +1371,7 @@ exports.init = function(global, document) {
   // @return array
   select = function(selector, from, callback) {
 
-      var i, changed, element, elements, parts, resolver, token;
+      var z, changed, element, elements, parts, resolver, token;
 
       if (arguments.length === 0) {
         emit('Missing required selector parameters');
@@ -1534,7 +1534,7 @@ exports.init = function(global, document) {
 
         else if ((parts = selector.match(Optimize.CLASS)) && (token = parts[1])) {
           if ((elements = byClass(token, from)).length === 0) { return [ ]; }
-          for (var z = 0, els = [ ]; elements.length > z; ++z) {
+          for (z = 0, els = [ ]; elements.length > z; ++z) {
             els = concatList(els, elements[z].getElementsByTagName('*'));
           }
           elements = els;
@@ -1662,4 +1662,4 @@ exports.init = function(global, document) {
       }
   };
 
-}
+};
