@@ -7,8 +7,6 @@
 , "main": "./lib/dom.js"
 , "dependencies": { "coffee-script": "*" }
 , "scripts": {
-		"build": "./node_modules/.bin/coffee -o ./lib -c *.coffee html/*.coffee; cp css/nwmatcher.js ./lib/css",
-		"clean": "rm -r ./lib",
-		"postinstall": "npm run-script build"
+		"build": "make"
 	}
 }
