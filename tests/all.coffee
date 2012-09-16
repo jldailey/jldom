@@ -18,7 +18,7 @@ describe 'document', ->
 		assert document.body?
 	it "has DOCUMENT_ELEMENT node type", ->
 		assert.equal document.nodeType, 9, "document.nodeType"
-	describe 'creating a new element', ->
+	describe '.createElement()', ->
 		div = document.createElement('div')
 		it 'has node type', ->
 			assert.equal div.nodeType, 1
@@ -36,7 +36,6 @@ describe 'document', ->
 				document.body.appendChild div
 				document.body.removeChild div
 				assert.equal document.body.childNodes.length, 0
-
 	describe '.getElementsByTagName()', ->
 		it "should find a single element", ->
 			document.body.innerHTML = "<div/>"
@@ -47,14 +46,12 @@ describe 'document', ->
 		it "is not case sensitive", ->
 			document.body.innerHTML = "<p><div><div/></div></p>"
 			assert.equal document.body.getElementsByTagName('div').length, 2
-	
 	describe '.getElementById()', ->
 		it 'finds a single element', ->
 			div = document.createElement("div")
 			div.id = "getElemId"
 			document.body.appendChild(div)
 			assert.equal document.getElementById("getElemId"), div
-
 	describe ".attributes", ->
 		it "is read/write", ->
 			div = document.createElement 'div'
@@ -92,7 +89,6 @@ describe 'document', ->
 				attr = div.getAttributeNode("name")
 				assert.equal attr.value, "foo"
 				assert.equal attr.nodeValue, "foo"
-	
 	describe ".childNodes", ->
 		it "every node should have .childNodes", ->
 			div = document.createElement("div")
@@ -210,23 +206,29 @@ describe 'document', ->
 				select.selectedIndex = 1
 				assert.equal select.selectedIndex, 1, 'select.selectedIndex * 2'
 				assert.equal select.value, 'B', 'select.value'
-	it "input_radio",  ->
-		test_doc = global.dom.createDocument()
-		test_doc.body.innerHTML = "<input type='radio' selected>"
-		input = test_doc.body.childNodes[0]
-		assert.equal input.constructor.name, "HTMLInputElement"
-		assert.equal input.hasAttribute('selected'), true, 'input.hasAttr'
-		assert.equal input.getAttribute('selected'), ''
-		assert.equal input.selected, true, 'input.selected'
-		input.removeAttribute('selected')
-		assert.equal input.selected, false, 'input.selected'
-		assert.equal input.value, "on"
-	it "input_checkbox",  ->
-		test_doc = global.dom.createDocument()
-		test_doc.body.innerHTML = "<input type='checkbox' checked >"
-		input = test_doc.body.childNodes[0]
-		assert.equal input.checked, true, 'input.checked'
-		assert.equal input.value, "on"
+		describe "<input type='radio'>", ->
+			test_doc = global.dom.createDocument()
+			test_doc.body.innerHTML = "<input type='radio' selected>"
+			input = test_doc.body.childNodes[0]
+			it "should be an HTMLInputElement", ->
+				assert.equal input.constructor.name, "HTMLInputElement"
+			it "has a 'selected' attribute", ->
+				assert.equal input.hasAttribute('selected'), true
+			it "having selected attribute means selected is true", ->
+				assert.equal input.getAttribute('selected'), ''
+				assert.equal input.selected, true
+				input.removeAttribute('selected')
+				assert.equal input.selected, false
+			it "should have a default value of 'on'", ->
+				assert.equal input.value, "on"
+		describe "<input type='checkbox'>", ->
+			test_doc = global.dom.createDocument()
+			test_doc.body.innerHTML = "<input type='checkbox' checked >"
+			input = test_doc.body.childNodes[0]
+			it "should have a special .checked property", ->
+				assert.equal input.checked, true, 'input.checked'
+			it "should have a default value of 'on'", ->
+				assert.equal input.value, "on"
 	it "can create/render comments",  ->
 		comment_doc = global.dom.createDocument()
 		comment = comment_doc.createComment("comment text")
@@ -261,7 +263,6 @@ describe 'document', ->
 	html = require('../html/parser')
 
 	test_parse = (input, output, debug = false) ->
-		message = ""
 		try
 			result = html.parse(input, document, debug).toString(false, true)
 			output ?= input
@@ -307,7 +308,6 @@ describe 'document', ->
 		p: () -> test_escape '<p>', '&lt;p&gt;'
 		amp: () -> test_escape '&amp;', '&amp;'
 		mixed: () -> test_escape '?input=foo&amp;bar&key=value', '?input=foo&amp;bar&key=value',
-# TODO: more escape and unescape tests
 	}
 
 	TestReport()
