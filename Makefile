@@ -1,29 +1,38 @@
 JAVA=$(shell which java)
+COFFEE=node_modules/.bin/coffee
+MOCHA=node_modules/.bin/mocha
 
 all: lib/dom.js
 
-lib/dom.js: html/parser.js css/nwmatcher.js dom.coffee
-	coffee -o ./lib -c dom.coffee
-	echo "var privates = {};" > lib/tmp.js
-	cat html/parser.js css/nwmatcher.js | sed -E 's/exports/privates/g' >> lib/tmp.js
-	cat lib/dom.js >> lib/tmp.js
-	rm html/parser.js
-	mv lib/tmp.js $@
-	sed -e 's/= require[^;]*;/= privates;/g' -i .bak $@
-	rm lib/*.bak
-	$(JAVA) -jar ./build/yuicompressor.jar lib/dom.js -v -o lib/dom.js
+lib/dom.min.js: lib/dom.js
+	$(JAVA) -jar ./build/yuicompressor.jar $< -v -o $@
+
+lib/dom.js: $(COFFEE) html/parser.js css/nwmatcher.js dom.coffee
+	(echo "var privates = {};" \
+		&& cat html/parser.js css/nwmatcher.js | sed -E 's/exports/privates/g' \
+		&& (cat dom.coffee | $(COFFEE) -sc) \
+	) | sed -e 's/= require[^;]*;/= privates;/g' > $@
 
 %.min.js: %.js
 	$(JAVA) -jar ./build/yuicompressor.jar $< -v -o $@
 
-html/parser.js: html/parser.coffee
-	coffee -o ./html -c html/parser.coffee
+html/parser.js: $(COFFEE) html/parser.coffee
+	$(COFFEE) -o ./html -c html/parser.coffee
 
-test: dom.coffee
-	for i in $(shell ls tests/*.coffee); do coffee $$i; done
+$(COFFEE):
+	npm install coffee-script
+
+$(MOCHA):
+	npm install mocha
+
+test: test/passing
+
+test/passing: $(MOCHA) test/all.coffee lib/dom.js
+	$^ --compilers coffee:coffee-script --globals document,window,dom -R dot \
+		&& echo > $@
 
 clean:
-	rm -f html/parser.js
+	rm -f test/passing
 	rm -f lib/dom.js
 	rm -f lib/dom.min.js
 
