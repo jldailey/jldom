@@ -672,8 +672,7 @@ exports.init = function(global, document) {
         byTagRaw(tag, from), 0);
     } :
     function(tag, from) {
-			var j;
-      var i = j = -1, data = [ ],
+      var j, i = j = -1, data = [ ],
         element, elements = (from || doc).getElementsByTagName(tag);
       if (tag == '*') {
         while ((element = elements[++i])) {

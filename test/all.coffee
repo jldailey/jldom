@@ -1,7 +1,7 @@
 assert = require 'assert'
-dom = require "../dom"
+dom = require "../lib/dom.js"
 dom.registerGlobals global
-global.dom = dom
+global.dom = dom # mocha seems to break some closure references
 global.document = dom.createDocument()
 global.window = global
 
@@ -257,12 +257,8 @@ describe 'document', ->
 			document.body.innerHTML = '<div><span/><p id="classTest" class="alpha beta"/></div>'
 			testSelector "div *", '<span/>,<p id="classTest" class="alpha beta"/>'
 
-###
-# vim: ft=coffee
-	require "./common"
-	html = require('../html/parser')
-
 	test_parse = (input, output, debug = false) ->
+		html = require('../html/parser')
 		try
 			result = html.parse(input, document, debug).toString(false, true)
 			output ?= input
@@ -271,85 +267,85 @@ describe 'document', ->
 			throw err
 		if result isnt output
 			throw Error result+" !== "+output
+	
+	describe ".innerHTML can parse", ->
+		cases = [
+			["text", "text"],
+			["<p>","<p/>"],
+			["<div/>"],
+			["<div />", "<div/>"],
+			["<div>Harro?</div>"],
+			["<div>foo</div>"],
+			["<div>1,2</div>"],
+			["<div><p>Hi.</p></div>"],
+			["<div><p><span>Bye.</span></p></div>"],
+			["<div><p/></div>"],
+			["<div><p /></div>", "<div><p/></div>"],
+			["<div><p  /></div>", "<div><p/></div>"],
+			["<div key='val'></div>", '<div key="val"/>'],
+			["<div key='val' ></div>", '<div key="val"/>'],
+			["<div key='val'/>", '<div key="val"/>'],
+			["<div key='val' />", '<div key="val"/>'],
+			["<div id='test_parse'></div>", '<div id="test_parse"/>'],
+			["<input checked/>"],
+			["<eval>CurrencyFormat(Application.User.balance)</eval>"],
+			['<body><!-- comment --><span>foo</span></body>'],
+			['<a>Hello<b>World</b></a>'],
+			['<head><meta charset="utf-8"><span>foo</span></head>', '<head><meta charset="utf-8"/><span>foo</span></head>'],
+			['<head><meta charset="utf-8"/><span>foo</span></head>', '<head><meta charset="utf-8"/><span>foo</span></head>'],
+			['<head><meta charset="utf-8"></meta><span>foo</span></head>', '<head><meta charset="utf-8"/><span>foo</span></head>'],
+		]
+		for c in cases
+			it c[0], -> test_parse c...
 
 	test_escape = (input, output) ->
+		html = require('../html/parser')
 		result = html.escape(input)
 		if result isnt output
 			throw Error result+" !== "+output
+	
+	describe ".innerHTML does escape", ->
+		it '<p>', -> test_escape '<p>', '&lt;p&gt;'
+		it '&amp;', -> test_escape '&amp;', '&amp;'
+		it '?input=foo&amp;bar&key=value', -> test_escape '?input=foo&amp;bar&key=value', '?input=foo&amp;bar&key=value',
 
-	TestGroup 'parse', {
-		div: () -> test_parse "<div/>"
-		div_text1: () -> test_parse "<div>Harro?</div>"
-		div_text2: () -> test_parse "<div>foo</div>", "<div>foo</div>"
-		div_text3: () -> test_parse '<div>1,2</div>', '<div>1,2</div>'
-		div_p_text: () -> test_parse "<div><p>Hi.</p></div>"
-		div_p_span_text: () -> test_parse "<div><p><span>Bye.</span></p></div>"
-		div_closed: () -> test_parse "<div />", "<div/>"
-		div_p_closed: () -> test_parse "<div><p/></div>","<div><p/></div>"
-		div_p_closed2: () -> test_parse "<div><p /></div>","<div><p/></div>"
-		div_p_closed3: () -> test_parse "<div><p  /></div>","<div><p/></div>"
-		div_attr1: () -> test_parse "<div key='val'></div>", '<div key="val"/>'
-		div_attr2: () -> test_parse "<div key='val' ></div>", '<div key="val"/>'
-		div_attr3: () -> test_parse "<div key='val'/>", '<div key="val"/>'
-		div_attr4: () -> test_parse "<div key='val' />", '<div key="val"/>'
-		div_attr5: () -> test_parse '<div id="test_parse"></div>', '<div id="test_parse"/>'
-		div_attr_empty: () -> test_parse '<input checked/>'
-		text_complex: () -> test_parse '<eval>CurrencyFormat(Application.User.balance)</eval>'
-		p: () -> test_parse '<p>','<p/>'
-		text_bare: () -> test_parse 'text', 'text' # parsing lone text as text nodes
-		comment: () -> test_parse '<body><!-- comment --><span>foo</span></body>'
-		text_broken: () -> test_parse '<a>Hello<b>World</b></a>'
-		meta1: () -> test_parse '<head><meta charset="utf-8"><span>foo</span></head>', '<head><meta charset="utf-8"/><span>foo</span></head>'
-		meta2: () -> test_parse '<head><meta charset="utf-8"/><span>foo</span></head>', '<head><meta charset="utf-8"/><span>foo</span></head>'
-		meta3: () -> test_parse '<head><meta charset="utf-8"></meta><span>foo</span></head>', '<head><meta charset="utf-8"/><span>foo</span></head>'
-	}
+	describe 'nwmatcher', ->
+		nw_doc = global.dom.createDocument()
+		nw_doc.body.innerHTML = "<div><p id='pId' class='c'><span class='c'>C</span></p><input name='foo' /></div>"
+		nw = require("../css/nwmatcher")
+		matcher = nw.init(global, nw_doc)
 
-	TestGroup 'escape', {
-		p: () -> test_escape '<p>', '&lt;p&gt;'
-		amp: () -> test_escape '&amp;', '&amp;'
-		mixed: () -> test_escape '?input=foo&amp;bar&key=value', '?input=foo&amp;bar&key=value',
-	}
+		describe '.byId', ->
+			it 'find DOM nodes', ->
+				assert.equal matcher.byId('pId').constructor.name, "HTMLParagraphElement"
 
-	TestReport()
-
-# vim: ft=coffee
-	require "./common"
-
-	nw_doc = global.dom.createDocument()
-	nw_doc.body.innerHTML = "<div><p id='pId' class='c'><span class='c'>C</span></p><input name='foo' /></div>"
-
-	nw = require("../css/nwmatcher")
-	matcher = nw.init(global, nw_doc)
-
-	TestGroup 'nwmatcher', {
-		id: () -> assert.equal matcher.byId('pId').constructor.name, "HTMLParagraphElement"
-		class: () ->
+		describe '.byClass()', ->
 			c = matcher.byClass('c')
-			assert.equal c.constructor.name, "Array"
-			assert.equal c.length, 2
-			assert matcher.match(c[0], '.c')
-			assert matcher.match(c[1], '.c')
-			assert !matcher.match(c[1], 'c')
-		name: () ->
+			it "is an Array", -> assert.equal c.constructor.name, "Array"
+			it "finds the right elements", ->
+				assert.equal c.length, 2
+				assert matcher.match(c[0], '.c')
+				assert matcher.match(c[1], '.c')
+				assert !matcher.match(c[1], 'c')
+
+		describe '.byName()', ->
 			f = matcher.byName('foo')
-			assert.equal f.constructor.name, "Array"
-			assert.equal f.length, 1
-		tag: () ->
+			it "is an Array", -> assert.equal f.constructor.name, "Array"
+			it "find the right elements", -> assert.equal f.length, 1
+
+		describe '.byTag()', ->
 			s = matcher.byTag('span')
-			assert.equal s.constructor.name, "Array"
-			assert.equal s.length, 1
-		sibling: () ->
-			x = matcher.select('p + input')
-			assert.equal x.constructor.name, "Array"
-			assert.equal x.length, 1
-		star: () ->
-			a = matcher.select('*')
-			assert.equal a.constructor.name, "Array"
-			assert.equal a.length, 6
-	}
+			it "is an Array", -> assert.equal s.constructor.name, "Array"
+			it "finds the right elements", -> assert.equal s.length, 1
 
-	TestReport()
+		describe '.select()', ->
+			it "supports the '+' selector", ->
+				x = matcher.select('p + input')
+				assert.equal x.constructor.name, "Array"
+				assert.equal x.length, 1
+			it "supports the '*' selector", ->
+				a = matcher.select('*')
+				assert.equal a.constructor.name, "Array"
+				assert.equal a.length, 6
 
-			
-###
 # vim: ft=coffee
