@@ -256,6 +256,30 @@ describe 'document', ->
 		it "star",  ->
 			document.body.innerHTML = '<div><span/><p id="classTest" class="alpha beta"/></div>'
 			testSelector "div *", '<span/>,<p id="classTest" class="alpha beta"/>'
+	
+	describe "Events", ->
+		it "can bind and trigger events", ->
+			doc = global.dom.createDocument()
+			doc.body.innerHTML = "<div id='a'><div id='b'></div></div>"
+			a = doc.querySelector("#a")
+			pass = false
+			a.attachEventListener "dummy", ((evt) -> pass = true), false
+			e = doc.createEvent "Events"
+			e.initEvent "dummy", true, true
+			a.dispatchEvent e
+			assert pass
+		it "propagates up", ->
+			doc = global.dom.createDocument()
+			doc.body.innerHTML = "<div id='a'><div id='b'></div></div>"
+			a = doc.querySelector("#a")
+			b = doc.querySelector("#b")
+			pass = false
+			a.attachEventListener "dummy", ((evt) -> pass = true), false
+			e = doc.createEvent "Events"
+			e.initEvent "dummy", true, true
+			b.dispatchEvent e
+			assert pass
+			
 
 	test_parse = (input, output, debug = false) ->
 		html = require('../html/parser')

@@ -113,10 +113,11 @@ class Node
 	# isEqualNode: NotSupported
 	# isSupported: NotSupported
 	# normalize: NotSupported
-	addEventListener: (type, listener, useCapture = false) ->
+	addEventListener: addEventListener = (type, listener, useCapture = false) ->
 		list = (@listeners[useCapture][type] ?= [])
-		if not listener in list
+		unless listener in list
 			list.push listener
+	attachEventListener: addEventListener
 	removeEventListener: (type, listener = null, useCapture = false) ->
 		list = (@listeners[useCapture][type] ?= [])
 		i = list.indexOf listener
