@@ -311,6 +311,10 @@ class Entity extends Node
 		a[2] ?= Node.ENTITY_NODE
 		super a...
 
+class ClientRect
+	constructor: ->
+		@width = @height = @top = @left = @bottom = @right = 0
+
 class Element extends Node
 	constructor: (a...) ->
 		a[2] ?= Node.ELEMENT_NODE
@@ -375,7 +379,8 @@ class Element extends Node
 	scrollIntoView: NotSupported
 	scrollIntoViewIfNeeded: NotSupported
 	# size and position
-	getBoundingClientRect: NotSupported
+	getBoundingClientRect: ->
+		return new ClientRect()
 	getClientRects: NotSupported
 	# focus
 	focus: NotSupported
