@@ -10,7 +10,7 @@ lib/dom.min.js: lib/dom.js
 lib/dom.js: $(COFFEE) html/parser.js css/nwmatcher.js dom.coffee
 	(echo "var privates = {};" \
 		&& cat html/parser.js css/nwmatcher.js | sed -E 's/exports/privates/g' \
-		&& (cat dom.coffee | $(COFFEE) -sc) \
+		&& $(COFFEE) -bp dom.coffee \
 	) | sed -e 's/= require[^;]*;/= privates;/g' > $@
 
 %.min.js: %.js
