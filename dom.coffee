@@ -848,7 +848,7 @@ class Document extends Element
 	createEvent: (type) ->
 		switch type
 			when "MutationEvents" then new MutationEvent()
-			when "MouseEvent" then new MouseEvent()
+			when "MouseEvents" then new MouseEvent()
 			else new Event()
 	createTextNode: (text) -> new Text(text, @)
 	getElementById: (id) -> @_private.idMap[id]
