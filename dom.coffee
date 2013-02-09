@@ -44,11 +44,12 @@ class Event
 		@timeStamp = 0
 	stopPropagation: ->
 	preventDefault: ->
-	initEvent: (type, canBubble, cancelable) ->
-		@type = type
-		@bubbles = canBubble
-		@cancelable = cancelable
-		@timeStamp = new Date().getTime()
+	initEvent: (@type, @bubbles, @cancelable, @timeStamp = +new Date) ->
+class MouseEvent extends Event
+	initMouseEvent: (@type, @bubbles, @cancelable, @window, @detail,
+		@screenX, @screenY, @clientX, @clientY,
+		@ctrlKey, @altKey, @shiftKey, @metaKey,
+		@button, @relatedTarget, @timeStamp = +new Date) ->
 
 class MutationEvent extends Event
 	@MODIFICATION = 1
@@ -847,6 +848,7 @@ class Document extends Element
 	createEvent: (type) ->
 		switch type
 			when "MutationEvents" then new MutationEvent()
+			when "MouseEvent" then new MouseEvent()
 			else new Event()
 	createTextNode: (text) -> new Text(text, @)
 	getElementById: (id) -> @_private.idMap[id]
