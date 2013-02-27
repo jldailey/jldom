@@ -320,7 +320,7 @@ class Element extends Node
 	constructor: (a...) ->
 		a[2] ?= Node.ELEMENT_NODE
 		super a...
-		@style = {}
+		@style = new CSSStyleDeclaration()
 	getElementsByClassName: (name) ->
 		ret = []
 		for c in @childNodes
@@ -880,6 +880,23 @@ class HTMLDocument extends Document
 	write: NotSupported
 	writeln: NotSupported
 
+class CSSPrimitiveValue
+	primitiveType: 1
+	cssValueType: 1
+	cssText: ""
+	getFloatValue: -> 0.0
+	setFloatValue: (k, v) ->
+
+class CSSStyleDeclaration
+	getPropertyCSSValue: (v) -> new CSSPrimitiveValue
+	getPropertyPriority: -> ""
+	getPropertyValue: -> getPropertyCSSValue().cssText
+	getPropertyShorthand: -> ""
+	isPropertyImplicit: -> false
+	removeProperty: (k) -> delete @[k]
+	setProperty: (k, v) ->
+
+
 exports.createDocument = ->
 	new HTMLDocument()
 
@@ -890,6 +907,7 @@ exports.registerGlobals = (g) ->
 	g.DocumentFragment = DocumentFragment
 	g.NodeList = Array # TODO: a real implementation of a (live?) NodeList
 	g.Event = Event
+	g.getComputedStyle = (node) -> new CSSStyleDeclaration(node)
 	for tagName of ELEMENT_MAP
 		c = ELEMENT_MAP[tagName]
 		g[c.name] = c
