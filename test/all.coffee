@@ -372,4 +372,22 @@ describe 'document', ->
 				assert.equal a.constructor.name, "Array"
 				assert.equal a.length, 6
 
+describe 'window', ->
+	it "should exist", ->
+		assert window?
+	it "should be the same as the global scope", ->
+		assert window is global
+	describe ".getComputedStyle()", ->
+		it "should exist", ->
+			assert typeof window.getComputedStyle is 'function'
+		it "should return CSSStyleDeclaration", ->
+			div = document.createElement('div')
+			assert window.getComputedStyle(div).constructor.name is 'CSSStyleDeclaration'
+		describe "CSSStyleDeclaration", ->
+			div = document.createElement('div')
+			style = window.getComputedStyle(div)
+			it "defines the right interface", ->
+				["getPropertyCSSValue","getPropertyValue","getPropertyPriority","getPropertyShorthand","isPropertyImplicit","removeProperty","setProperty"].forEach (method) ->
+					assert typeof style[method] is 'function'
+
 # vim: ft=coffee

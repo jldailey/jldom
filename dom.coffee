@@ -890,12 +890,11 @@ class CSSPrimitiveValue
 class CSSStyleDeclaration
 	getPropertyCSSValue: (v) -> new CSSPrimitiveValue
 	getPropertyPriority: -> ""
-	getPropertyValue: -> getPropertyCSSValue().cssText
+	getPropertyValue: -> @getPropertyCSSValue().cssText
 	getPropertyShorthand: -> ""
 	isPropertyImplicit: -> false
 	removeProperty: (k) -> delete @[k]
 	setProperty: (k, v) ->
-
 
 exports.createDocument = ->
 	new HTMLDocument()
