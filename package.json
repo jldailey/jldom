@@ -6,7 +6,6 @@
 , "author": "Jesse Dailey <jesse.dailey@gmail.com>"
 , "main": "./lib/dom.js"
 , "devDependencies": { "coffee-script": "*" }
-, "scripts": {
-		"build": "make"
-	}
+, "repository": { "type": "git", "url": "https://github.com/jldailey/jldom.git" }
+, "scripts": { "build": "make", "test": "make test" }
 }
