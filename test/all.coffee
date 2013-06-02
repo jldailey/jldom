@@ -132,6 +132,26 @@ describe 'document', ->
 			fragment_doc.body.appendChild(div)
 			div.appendChild(fragment)
 			assert.equal fragment_doc.toString(), '<html><head/><body><div id="fragment_test"><div/><p/></div></body></html>'
+	describe "anchor node", ->
+		it "can be created", ->
+			a = document.createElement("A")
+		describe ".href", ->
+			a = document.createElement("A")
+			a.href = "ws://localhost"
+			assert.equal a.href, "ws://localhost"
+			a.href = "ws2://joe:secret@localhost:81/pa/th/?sea=rch&bar=baz#hash"
+			assert.equal a.href, "ws2://joe:secret@localhost:81/pa/th/?sea=rch&bar=baz#hash"
+			assert.equal a.protocol, "ws2:"
+			assert.equal a.auth, 'joe:secret'
+			assert.equal a.hostname, 'localhost'
+			assert.equal a.port, '81'
+			assert.equal a.pathname, '/pa/th/'
+			assert.equal a.search, '?sea=rch&bar=baz',
+			assert.equal a.hash, '#hash'
+			a.protocol = "ws3:"
+			a.auth = null
+			assert.equal a.href, "ws3://localhost:81/pa/th/?sea=rch&bar=baz#hash"
+
 	describe "text nodes", ->
 		it "can be created", ->
 			text = document.createTextNode("&nbsp;")

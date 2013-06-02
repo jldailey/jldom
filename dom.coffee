@@ -21,7 +21,7 @@ repeat = (s, n) ->
 extend = (o, p) ->
 	o or= {}
 	for k of p
-		o[k] = p[k]
+		o[k] = p[k] if p[k] isnt undefined
 	return o
 
 property = (o, k, props) ->
@@ -786,6 +786,38 @@ property HTMLSelectElement::, 'value',
 			child = @childNodes[index]
 			if child.value is v
 				@selectedIndex = index
+
+href_re = /([^:]*:)*\/\/([^@]*@)*([^:\/]+)(:\d+)*([^\?#]+)*(\?[^#]*)*(#.*)*/
+href_init = (t) ->
+	t._private.href or=
+		protocol: ""
+		auth: ""
+		hostname: ""
+		port: ""
+		pathname: ""
+		search: ""
+		hash: ""
+['protocol', 'auth', 'hostname', 'port', 'pathname', 'search', 'hash']
+	.forEach (name) ->
+		property HTMLAnchorElement::, name,
+			get:     -> href_init(@)[name]
+			set: (v) -> href_init(@)[name] = v
+property HTMLAnchorElement::, 'href',
+	get: ->
+		h = href_init(@)
+		host = h.hostname
+		if h.port
+			host += ":" + h.port
+		if h.auth
+			host = h.auth + "@" + host
+		path = h.pathname
+		"#{h.protocol}//#{host}#{path}#{h.search}#{h.hash}"
+	set: (v) ->
+		h = href_init(@)
+		[_, protocol, auth, hostname, port, pathname, search, hash] = v.match(href_re) ? []
+		auth = auth?.replace /@$/,''
+		port = port?.replace /^:/,''
+		extend h, { protocol, auth, hostname, port, pathname, search, hash }
 
 class Attr extends Node
 	constructor: (name, value) ->
