@@ -342,7 +342,9 @@ class Element extends Node
 		return ret
 	# attributes
 	getAttribute: (name) ->
-		@attributes[name] or ""
+		switch name
+			when "href" then @href
+			else @attributes[name] or ""
 	getAttributeNode: (name) ->
 		n = new Attr(name, @getAttribute(name))
 		n.ownerElement = @
@@ -351,22 +353,19 @@ class Element extends Node
 	hasAttribute: (name) ->
 		name of @attributes
 	setAttribute: (name, value) ->
-		if not value?
+		unless value?
 			@removeAttribute(name)
-		switch name # we need to trigger some behavior inside setters here
-			when "class"
-				@className = value
-			when "id"
-				@id = value
-			else
-				@attributes[name] = value
+		@attributes[name] = switch name # we need to trigger some behavior inside setters here
+			when "href"  then @href = value
+			when "class" then @className = value
+			when "id"    then @id = value
+			else value
 	removeAttribute: (name) ->
 		delete @attributes[name]
 		switch name
-			when "class"
-				@_private.classes = []
-			when "id"
-				delete @ownerDocument?._private.idMap[@id]
+			when "class" then @_private.classes = []
+			when "id" then delete @ownerDocument?._private.idMap[@id]
+			when "href" then @href = ""
 	# selectors
 	matchesSelector: (selector) ->
 		@ownerDocument?._private.matcher.match(@, selector)
