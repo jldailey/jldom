@@ -17,7 +17,7 @@ describe 'document', ->
 	it "has a body", ->
 		assert document.body?
 	it "has DOCUMENT_ELEMENT node type", ->
-		assert.equal document.nodeType, 9, "document.nodeType"
+		assert.equal document.nodeType, 9
 	describe '.createElement()', ->
 		div = document.createElement('div')
 		it 'has node type', ->
@@ -136,38 +136,68 @@ describe 'document', ->
 		it "can be created", ->
 			a = document.createElement("A")
 		describe ".href", ->
-			it "can be set", ->
-				a = document.createElement("A")
-				a.href = "ws://localhost"
-				assert.equal a.href, "ws://localhost"
-				a.href = "ws2://joe:secret@localhost:81/pa/th/?sea=rch&bar=baz#hash"
-				assert.equal a.href, "ws2://joe:secret@localhost:81/pa/th/?sea=rch&bar=baz#hash"
-				assert.equal a.protocol, "ws2:"
-				assert.equal a.auth, 'joe:secret'
-				assert.equal a.hostname, 'localhost'
-				assert.equal a.port, '81'
-				assert.equal a.pathname, '/pa/th/'
-				assert.equal a.search, '?sea=rch&bar=baz',
-				assert.equal a.hash, '#hash'
-				a.protocol = "ws3:"
-				a.auth = null
-				assert.equal a.href, "ws3://localhost:81/pa/th/?sea=rch&bar=baz#hash"
+			a = document.createElement("A")
+			describe "echos", ->
+				echo_urls = [
+					"",
+					"#",
+					"prot://host",
+					"prot://auth@host:9047/path?search#hash"
+				]
+				for url in echo_urls then do (url) ->
+					it "echos #{url}", ->
+						a.href = url
+						assert.equal a.href, url
+			describe "component", ->
+				it "protocol", ->
+					a.href = "prot://auth@host:9047/path?search#hash"
+					assert.equal a.protocol, "prot:"
+				it "auth", ->
+					a.href = "prot://auth@host:9047/path?search#hash"
+					assert.equal a.auth, 'auth'
+				it "hostname", ->
+					a.href = "prot://auth@host:9047/path?search#hash"
+					assert.equal a.hostname, 'host'
+				it "port", ->
+					a.href = "prot://auth@host:9047/path?search#hash"
+					assert.equal a.port, '9047'
+				it "pathname", ->
+					a.href = "prot://auth@host:9047/path?search#hash"
+					assert.equal a.pathname, '/path'
+				it "search", ->
+					a.href = "prot://auth@host:9047/path?search#hash"
+					assert.equal a.search, '?search',
+				it "hash", ->
+					a.href = "prot://auth@host:9047/path?search#hash"
+					assert.equal a.hash, '#hash'
+				it "hash alone", ->
+					a.href = "#"
+					assert.equal a.hash, "#"
+				describe "changes href when", ->
+					it "protocol changes", ->
+						a.href = "prot://auth@host:9047/path?search#hash"
+						a.protocol = "ws3:"
+						assert.equal a.href, "ws3://auth@host:9047/path?search#hash"
+					it "auth changes", ->
+						a.href = "prot://auth@host:9047/path?search#hash"
+						a.auth = null
+						assert.equal a.href, "prot://host:9047/path?search#hash"
+					it "pathname changes", ->
+						a.href = "prot://auth@host:9047/path?search#hash"
+						a.pathname = null
+						assert.equal a.href, "prot://auth@host:9047?search#hash"
+					it "search changes", ->
+						a.href = "prot://auth@host:9047/path?search#hash"
+						a.search = null
+						assert.equal a.href, "prot://auth@host:9047/path#hash"
 			it "can be set with setAttribute", ->
-				a = document.createElement("A")
 				a.setAttribute 'href', "ws://localhost"
-				assert.equal a.href, "ws://localhost"
-				a.setAttribute 'href', "ws2://joe:secret@localhost:81/pa/th/?sea=rch&bar=baz#hash"
-				assert.equal a.href, "ws2://joe:secret@localhost:81/pa/th/?sea=rch&bar=baz#hash"
-				assert.equal a.protocol, "ws2:"
-				assert.equal a.auth, 'joe:secret'
-				assert.equal a.hostname, 'localhost'
-				assert.equal a.port, '81'
-				assert.equal a.pathname, '/pa/th/'
-				assert.equal a.search, '?sea=rch&bar=baz',
-				assert.equal a.hash, '#hash'
-				a.protocol = "ws3:"
-				a.auth = null
-				assert.equal a.getAttribute('href'), "ws3://localhost:81/pa/th/?sea=rch&bar=baz#hash"
+				assert.equal a.protocol, "ws:"
+				assert.equal a.hostname, "localhost"
+			it "getAttribute reads the .href property", ->
+				a.href = "ws://localhost"
+				a.protocol = "ws2"
+				assert.equal a.getAttribute('href'), "ws2://localhost"
 
 	describe "text nodes", ->
 		it "can be created", ->

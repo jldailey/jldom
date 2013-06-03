@@ -786,7 +786,7 @@ property HTMLSelectElement::, 'value',
 			if child.value is v
 				@selectedIndex = index
 
-href_re = /([^:]*:)*\/\/([^@]*@)*([^:\/]+)(:\d+)*([^\?#]+)*(\?[^#]*)*(#.*)*/
+href_re = /([^:]*:)*\/\/([^@#]*@)*([^:\/#]+)*(:\d+)*(\/[^\?#]+)*(\?[^#]*)*(#.*)*/
 href_init = (t) ->
 	t._private.href or=
 		protocol: ""
@@ -796,6 +796,9 @@ href_init = (t) ->
 		pathname: ""
 		search: ""
 		hash: ""
+href_reset = (t) ->
+	delete t._private.href
+	href_init t
 ['protocol', 'auth', 'hostname', 'port', 'pathname', 'search', 'hash']
 	.forEach (name) ->
 		property HTMLAnchorElement::, name,
@@ -803,17 +806,29 @@ href_init = (t) ->
 			set: (v) -> href_init(@)[name] = v
 property HTMLAnchorElement::, 'href',
 	get: ->
-		h = href_init(@)
+		h = href_init @
 		host = h.hostname
 		if h.port
 			host += ":" + h.port
 		if h.auth
 			host = h.auth + "@" + host
-		path = h.pathname
-		"#{h.protocol}//#{host}#{path}#{h.search}#{h.hash}"
+		if host.length > 0
+			host = "//" + host
+		protocol = h.protocol ? ""
+		if protocol.length > 0
+			unless (/:$/.test protocol)
+				protocol += ":"
+		path = h.pathname ? ""
+		search = h.search ?  ""
+		hash = h.hash ? ""
+		"#{protocol}#{host}#{path}#{search}#{hash}"
 	set: (v) ->
-		h = href_init(@)
-		[_, protocol, auth, hostname, port, pathname, search, hash] = v.match(href_re) ? []
+		h = href_reset @
+		if not /:\/\//.test v
+			if not /^\/\//.test v
+				v = "//" + v
+		m = v.match(href_re) ? $.zeros(8).map -> ""
+		[_, protocol, auth, hostname, port, pathname, search, hash] = m
 		auth = auth?.replace /@$/,''
 		port = port?.replace /^:/,''
 		extend h, { protocol, auth, hostname, port, pathname, search, hash }
@@ -945,5 +960,7 @@ exports.registerGlobals = (g) ->
 		c = ELEMENT_MAP[tagName]
 		g[c.name] = c
 
+if require.main is module
+	console.log "//#".match href_re
 
 # vim: ft=coffee
