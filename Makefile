@@ -28,7 +28,7 @@ $(MOCHA):
 test: test/passing
 
 test/passing: $(MOCHA) test/all.coffee lib/dom.js
-	$^ --compilers coffee:coffee-script --globals document,window,dom -R dot \
+	$^ --compilers coffee:coffee-script/register --globals document,window,dom -R dot \
 		&& echo > $@
 
 clean:
