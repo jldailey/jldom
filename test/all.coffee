@@ -221,6 +221,12 @@ describe 'document', ->
 			assert.equal(div.innerHTML, "&lt;p&gt;")
 			text.data = "Goodbye!"
 			assert.equal(div.innerHTML, "Goodbye!")
+		it "sets .parentNode properly", ->
+			text = div = null
+			div = document.createElement("div")
+			text = document.createTextNode("&nbsp;")
+			div.appendChild text
+			assert.equal text.parentNode, div
 		describe ".innerText", ->
 			text = div = null
 			it "includes direct text nodes", ->
