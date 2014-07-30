@@ -106,8 +106,8 @@ class Node
 		@childNodes = []
 		@attributes = { }
 		@listeners =
-			true: {}
-			false: {}
+			true: {} # listeners that do useCapture
+			false: {} # listeners that don't
 
 	# compareDocumentPosition: NotSupported
 	# isDefaultNamespace: NotSupported
@@ -394,7 +394,7 @@ class Element extends Node
 		else
 			indent = ""
 			newline = ""
-		attrs = ((" #{a}=\"#{@attributes[a]}\"" if a.length > 0 and @attributes[a] isnt "") for a of @attributes).join('')
+		attrs = ((" #{a}=\"#{@attributes[a]}\"" if a.length > 0 and @attributes[a] not in [null, undefined, ""]) for a of @attributes).join('')
 		attrs += ((" #{a}" if a.length > 0 and @attributes[a] is "") for a of @attributes).join('')
 		len = @childNodes.length
 		end = switch len
@@ -959,8 +959,5 @@ exports.registerGlobals = (g) ->
 	for tagName of ELEMENT_MAP
 		c = ELEMENT_MAP[tagName]
 		g[c.name] = c
-
-if require.main is module
-	console.log "//#".match href_re
 
 # vim: ft=coffee
