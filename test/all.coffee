@@ -364,9 +364,10 @@ describe 'document', ->
 			throw err
 		if result isnt output
 			throw Error result+" !== "+output
-	
+
 	describe ".innerHTML can parse", ->
 		cases = [
+			["", ""],
 			["text", "text"],
 			["<p>","<p/>"],
 			["<div/>"],
